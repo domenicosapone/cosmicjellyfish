@@ -66,11 +66,11 @@ Verified against `main` before this workstream:
 
 | Area | State |
 | --- | --- |
-| DESI | Survey-name branch exists in `config.py`, but **no YAML is shipped**. `surveyName="DESI"` fails with a missing-file error. |
-| Rubin / LSST | Same: branch exists, **no YAML shipped**. |
-| SKAO photometric | `SKAO-Photometric-Redbook.yaml` shipped in `other_survey_specifications/`, but scale cuts differ from the paper-era inputs (`lmax_GCph` 750 vs 1500, `lmax_WL` 3000 vs 5000). |
-| SKAO spectroscopic | `SKAO-Spectroscopic-Redbook.yaml` shipped; 5 z-bins but only `Ps_1..Ps_4` shot-noise keys (suspected bug). |
-| SKAO intensity mapping | `SKAO-IM-Redbook.yaml` shipped; contains both `area_survey_IM` and `fsky_IM` with inconsistent values. |
+| DESI | Survey-name branch exists in `config.py`. Paper-era `DESI-BGS-SKAOPaper` and `DESI-ELG-SKAOPaper` files are now shipped, opt-in via `survey_name_spectro`. |
+| Rubin / LSST | Paper-era `Rubin-Photometric-SKAOPaper` is now shipped, opt-in via `survey_name_photo`. |
+| SKAO photometric | `SKAO-Photometric-Redbook.yaml` shipped; paper-era cuts (`lmax_GCph` 1500, `lmax_WL` 5000) live in `SKAO-Photometric-SKAOPaper.yaml`. |
+| SKAO spectroscopic | `SKAO-Spectroscopic-Redbook.yaml` shipped; the missing `Ps_5` key is fixed, and `SKAO-Spectroscopic-SKAOPaper.yaml` holds the paper-era transcription. |
+| SKAO intensity mapping | `SKAO-IM-Redbook.yaml` shipped; `SKAO-IM-Redbook-DESI-ELG.yaml` adds the DESI-ELG-aligned bins. The dual `area_survey_IM`/`fsky_IM` values remain and are documented (issue 3). |
 | Planck | `Planck.yaml` shipped and selectable by `surveyName`; CMB path documented in `docs/source/cmb_benchmarks.md`. |
 | Cross-spectra | `observables=['GCsp','IM']` selects the **IM x GCsp cross-spectrum only**, not auto + cross. Must be stated in the docs. |
 | Historical inputs | Present only in the read-only `cosmicfish_reloaded_skaproject` checkout (`.dat` tables, old YAMLs, saved Fisher matrices, `data-for-fig1.dat`). |
@@ -91,18 +91,20 @@ and what it means.
 
 Tasks
 
-- [ ] Inventory every historical file and map it to the current schema element
+- [x] Inventory every historical file and map it to the current schema element
       (source path, notebook/cell, survey value, units, current equivalent).
 - [ ] Trace which `vfinal/` Fisher matrices and which plot data correspond to which
-      figure/table in Casas et al. 2023.
-- [ ] Compare old vs new formulas for: number density `n(z)`, linear bias, photo-z
+      figure/table in Casas et al. 2023. (Started; `vfinal/` inventory recorded in
+      section 5, per-figure mapping still open.)
+- [x] Compare old vs new formulas for: number density `n(z)`, linear bias, photo-z
       parameters, shot noise, HI beam, system noise, survey volume.
-- [ ] Establish what the old `dn3` column means in the old volume calculation before
-      mapping it to `dndOmegadz` (the old code read `gc_table[:,3]` as the density and
-      built the volume from the bin edges separately).
-- [ ] Record the old derived conventions: `z0 = zm / sqrt(2)`, `z0_p = 1.0`,
-      `binrange = range(1, len(z_bins))`, `ngalbin` from `ngal_sqarmin`.
-- [ ] Keep the original data **read-only**; never modify the historical checkout.
+- [x] Establish what the old `dn3` column means in the old volume calculation before
+      mapping it to `dndOmegadz`. Result: `dn3` is `dN/dz` per deg^2, and the old volume
+      formula is algebraically identical to the current one.
+- [x] Record the old derived conventions: `z0 = zm / sqrt(2)`, `z0_p = 1.0` for
+      non-Euclid (cancels in normalization), `binrange = range(1, len(z_bins))`,
+      `ngalbin` from `ngal_sqarmin`.
+- [x] Keep the original data **read-only**; never modify the historical checkout.
 
 Deliverable: the assumptions table in [section 6](#6-provenance-and-assumptions-table)
 filled in, with every row marked *matched*, *different by design* or
@@ -140,17 +142,28 @@ Planned files (final names may shift once Phase 0 confirms the inputs):
 
 Tasks
 
-- [ ] Transcribe bin edges, densities, fiducial bias and every nuisance parameter
+- [x] Transcribe bin edges, densities, fiducial bias and every nuisance parameter
       (`Ps_*`, `sigmap_*`, `sigmav_*` where relevant) for each new YAML.
-- [ ] Check that per-bin arrays are complete and that every bin has a matching key
+- [x] Check that per-bin arrays are complete and that every bin has a matching key
       (this is exactly the `Ps_1..Ps_4` vs 5-bin bug in the shipped SKAO spectro file).
-- [ ] Confirm each YAML loads by name from an **installed** package (package data, not
+- [x] Confirm each YAML loads by name from an **installed** package (package data, not
       just the source tree).
-- [ ] Confirm `surveyName="DESI"` and the Rubin branch resolve to a real file.
+- [ ] Confirm `surveyName="DESI"` and the Rubin branch resolve to a real file without an
+      explicit `survey_name_*` option. (Currently they still need the option; see the
+      Phase 1 decision below.)
+- [x] Update `docs/source/comprehensive_guide.md` and `docs/KNOWN_ISSUES.md`.
+
+**Decision taken:** historical variants live in `other_survey_specifications/` and stay
+opt-in. The `DESI`/`Rubin` branches keep loading whatever `survey_name_photo` /
+`survey_name_spectro` names, so the docs show the explicit option form. Promoting a
+*current-best* DESI/Rubin file to the defaults is deferred until an up-to-date
+specification is agreed.
 
 **Exit criterion.** Every new YAML loads, produces a config, and passes a schema check;
 `docs/source/comprehensive_guide.md` and `docs/KNOWN_ISSUES.md` are updated to reflect
-what is now shipped.
+what is now shipped. **Met:** `tests/survey_specs_test.py` covers parsing and
+per-bin consistency; `FisherMatrix` construction was verified for DESI BGS, DESI ELG,
+Rubin, SKAO photometric, SKAO spectroscopic and the IM x DESI-ELG cross.
 
 ### Phase 2 - Validate individual observables
 
@@ -228,7 +241,7 @@ Tasks
       nuisance-marginalisation checks.
 - [ ] Results table separating historical MG references, matched historical observables
       and new GR forecasts.
-- [ ] CHANGELOG entry.
+- [x] CHANGELOG entry (updated per step).
 - [ ] Final review pass and PR.
 
 **Exit criterion.** Green CI, strict docs build, and a reviewer can reproduce at least
@@ -240,14 +253,14 @@ one number per survey from the docs page alone.
 
 | # | Issue | Where | Phase | Status |
 | --- | --- | --- | --- | --- |
-| 1 | SKAO photometric scale cuts differ between historical (`lmax_GCph` 1500, `lmax_WL` 5000) and shipped (750/3000) | `SKAO-Photometric-Redbook.yaml` | 1 | open |
-| 2 | SKAO spectro defines 5 z-bins but only `Ps_1..Ps_4` shot-noise keys | `SKAO-Spectroscopic-Redbook.yaml` | 1 | open |
+| 1 | SKAO photometric scale cuts differ between historical (`lmax_GCph` 1500, `lmax_WL` 5000) and shipped (750/3000) | `SKAO-Photometric-Redbook.yaml` | 1 | **resolved** - paper-era cuts kept in `SKAO-Photometric-SKAOPaper.yaml` |
+| 2 | SKAO spectro defines 5 z-bins but only `Ps_1..Ps_4` shot-noise keys | `SKAO-Spectroscopic-Redbook.yaml` | 1 | **fixed** - added `Ps_5`; covered by `tests/survey_specs_test.py` |
 | 3 | IM config has both `area_survey_IM: 5000` and `fsky_IM: 0.48`; the config prefers `fsky_IM`, the IM noise uses `fsky_IM`, but `SpectroCov.volume_survey` uses `fsky_spectro` | `SKAO-IM-Redbook.yaml`, `spectro_cov.py` | 1-2 | open |
 | 4 | Historical IM x DESI-ELG cross used bins aligned to DESI ELG; current covariance uses `intersect1d` on bins/mids | `spectro_cov.py` | 2-3 | open |
 | 5 | `observables=['GCsp','IM']` selects the cross-spectrum only, not auto + cross | `fishermatrix/cosmicfish.py` | 3 | open |
 | 6 | Old runs used external MGCAMB tables, unavailable here | historical project | n/a | documented |
-| 7 | `surveyName="DESI"` fails with a missing-file error | `config.py` | 1 | open |
-| 8 | Rubin and DESI have code branches but no shipped YAML | `config.py`, docs | 1 | open |
+| 7 | `surveyName="DESI"` fails with a missing-file error | `config.py` | 1 | **documented** - requires an explicit `survey_name_spectro` option |
+| 8 | Rubin and DESI have code branches but no shipped YAML | `config.py`, docs | 1 | **resolved** - `-SKAOPaper` files shipped |
 | 9 | `kmax_IM` units unconfirmed | `docs/KNOWN_ISSUES.md` | 2 | open |
 | 10 | Survey-table numbers in the docs have not been re-checked against the YAMLs | docs | 1 | open |
 
@@ -282,22 +295,27 @@ Reference parameter basis in the saved matrices:
 
 ## 6. Provenance and assumptions table
 
-Fill this in during Phase 0. One row per historical input or convention.
+Filled in during Phase 0. One row per historical input or convention.
 
 | Historical input | Source path / notebook | Unit | Current schema element | Match | Notes |
 | --- | --- | --- | --- | --- | --- |
-| DESI BGS n(z), bias | `DESI_BGS_GCsp.dat` | Mpc^-3 (assumed) | `dndOmegadz`, `bHg_*` | TBD | area 14000 |
-| DESI ELG n(z), bias | `DESI_ELG_GCsp.dat` | Mpc^-3 (assumed) | `dndOmegadz`, `bHg_*` | TBD | bins 0.6-1.6+ |
-| SKAO HI galaxy n(z), bias | `SKA1_GCsp_MDB2_Redbook.dat` | Mpc^-3 (assumed) | `dndOmegadz`, `bHg_*` | TBD | matches shipped SKAO spectro numbers |
-| SKAO IM bins | `SKA1_IM_MDB1_Redbook.dat` | - | `z_bins_IM` | TBD | many variants exist |
-| IM x DESI-ELG bins | `SKA1_IM_MDB1_Redbook-new-DESI_E.dat` | - | `z_bins_IM` | TBD | aligned to DESI ELG |
-| Rubin photo-z / n(z) | `Rubin-Optimistic.yaml`, `nofz_ska1_5000.dat` | - | `z_bins_ph`, `photo_z_params` | TBD | `zm` 0.156 -> `z0 = zm/sqrt(2)` |
-| SKAO photo-z / n(z) | `SKA1-Redbook-Optimistic.yaml` | - | `z_bins_ph`, `photo_z_params` | TBD | `zm` 1.1 |
-| Old `dn3` meaning | `bckpcosmicfishpie/cosmology/nuisance.py` | - | `dndOmegadz` | TBD | read as column 3 |
-| Old volume formula | old `SpectroCov` | Mpc^3 | `d_volume`, `volume_survey` | TBD | bin edges vs `dn3` |
-| Old shot noise | old configs | - | `shot_noise_parametrization` | TBD | `Ps_*` all zero in saved matrices |
-| Old FoG / `sigmap` | old configs | - | `nonlinear_parametrization` | TBD | `bfs8terms: True`, `AP_effect: True` |
-| Fig. 1 spectra | `data-for-fig1.dat` | Mpc^3 | new `P_gg`, `P_II`, `P_Ig` at `z=0.6` | TBD | MG fiducial |
+| `dn3` column | `*.dat` files, read as `gc_table[:,3]` | dN/dz per deg^2 | `dndOmegadz` | **matched** | Old `n_density = dn3*dz/d_volume_per_deg2`; current `n_density = dnz*dz/d_volume*areasky`. Since `d_volume_per_deg2 = d_volume/areasky`, the two expressions are algebraically identical. Copy `dn3` verbatim into `dndOmegadz`. |
+| DESI BGS n(z), bias | `DESI_BGS_GCsp.dat` | dN/dz/deg^2 | `dndOmegadz`, `bHg_*` | **matched** | 5 bins 0.00-0.50, densities 1165/3074/1909/732/120, bias 1.36436..1.45367, area 14000 deg^2 |
+| DESI ELG n(z), bias | `DESI_ELG_GCsp.dat` | dN/dz/deg^2 | `dndOmegadz`, `bHg_*` | **matched** | 11 bins 0.60-1.70, densities 309/2269/1923/2094/1441/1353/1337/523/466/329/126, bias 1.01916..1.36020 |
+| SKAO HI galaxy n(z), bias | `SKA1_GCsp_MDB2_Redbook.dat` | dN/dz/deg^2 | `dndOmegadz`, `bHg_*` | **matched** | Identical to the shipped `SKAO-Spectroscopic-Redbook.yaml` (2714.82..154.353, 0.64813..0.97350) |
+| SKAO IM bins | `SKA1_IM_MDB1_Redbook.dat` | - | `z_bins_IM` | **matched by design** | Multiple variants exist; shipped `SKAO-IM-Redbook.yaml` uses 10 bins 0.5-2.6 |
+| IM x DESI-ELG bins | `SKA1_IM_MDB1_Redbook-new-DESI_E.dat` | - | `z_bins_IM` | **different by design** | Historical cross used IM bins aligned to DESI ELG. Needs a dedicated YAML; current `intersect1d` path must be tested (issue 4). |
+| Photo `dNdz(z)` shape | `photo_window.py` | - | `dNdz` | **matched** | Both old and new use `(z/z0_p)^2 exp(-(z/z0)^ngamma)`. Old set `z0_p=1.0` for non-Euclid, new sets `z0_p=z0`; the difference is a constant factor that cancels in the bin normalization. |
+| Photo `z0` | old/new config | - | `z0` | **matched** | `z0 = zm/sqrt(2)` in both. Rubin `zm=0.156`, SKAO `zm=1.1`, DESI-photo `zm=0.9`. |
+| `ngal_per_bin` | old/new config | count | `ngalbin_GCph`, `ngalbin_WL` | **matched** | Both compute `(ngal_sqarmin*3600/nbins)*sr` with `sr` the sky area in deg^2. |
+| Photo bias | old/new config | - | `photobiaspars` | **matched** | `binned` model generates `b_i = sqrt(1 + 0.5*(z_i+z_{i-1}))` in both. |
+| Survey area | old `area_survey` | deg^2 | `area_survey_GCph`, `area_survey_WL`, `area_survey_spectro`, `area_survey_IM` | **different by design** | Current schema is per-probe and an explicit `fsky_*` overrides the area. When migrating, convert a single historical area into the per-probe keys and do not also copy a conflicting `fsky_*`. |
+| Old volume formula | old `SpectroCov.volume_bin` | Mpc^3 per deg^2 | `d_volume`, `volume_survey` | **matched** | Old `volume_bin` divides the spherical shell by `4*pi*(180/pi)^2` and `volume_survey` multiplies by `area_survey`; current uses the full shell times `fsky`. Equivalent. |
+| Shot noise | old configs | - | `shot_noise_parametrization` | **matched** | `Ps_*` all `0.0` in the saved matrices; still add every key for every bin (see issue 2). |
+| FoG / `sigmap` | old configs | - | `nonlinear_parametrization` | **different by design** | Old defaults had `bfs8terms: True`; the JAX GCsp observable requires `False`. The two are algebraically identical at the fiducial (see `docs/source/gcsp_intermediate.md`), so this does not change the Fisher. |
+| AP effect | old configs | - | `AP_effect` | **matched** | `True` in both. |
+| Fig. 1 spectra | `data-for-fig1.dat` | Mpc^3 | new `P_gg`, `P_II`, `P_Ig` at `z=0.6` | **requires investigation** | Historical curves use the MG fiducial (`E11`, `E22`) and a different backend; expect a non-zero offset. Quantify, do not expect a match. |
+| Old MG parameter basis | `vfinal/*.paramnames` | - | - | **out of scope** | `E11`/`E22`/`mu`/`eta` cannot be reproduced; GR runs only. |
 
 ---
 
@@ -348,15 +366,15 @@ numbers are MG constraints and are **not** targets here.
 
 ## 8. Deliverables checklist
 
-- [ ] `docs/SURVEY_VALIDATION_ROADMAP.md` (this file), kept up to date
-- [ ] New survey YAMLs under `cosmicjellyfish/configs/other_survey_specifications/`
-      (and/or `default_survey_specifications/` after the Phase 1 decision)
+- [x] `docs/SURVEY_VALIDATION_ROADMAP.md` (this file), kept up to date
+- [x] New survey YAMLs under `cosmicjellyfish/configs/other_survey_specifications/`
 - [ ] `scripts/validation/run_survey_validation.py` and friends (quick/full)
 - [ ] `notebooks/NN-survey-validation.ipynb` (executed)
 - [ ] `docs/source/survey_validation.md` + `user_guide.md` link
 - [ ] Figures committed under `docs/source/_static/survey_validation/`
 - [ ] Tests under `tests/` for configs and observables
-- [ ] CHANGELOG entry
+      (configs done: `tests/survey_specs_test.py`; observables pending)
+- [x] CHANGELOG entry (updated per step)
 - [ ] `paper/` figure + paragraph
 - [ ] PR
 
@@ -370,3 +388,5 @@ is next.
 | Date | Step | Result |
 | --- | --- | --- |
 | 2026-11-13 | Wrote this roadmap | Plan recorded; next is Phase 0 provenance audit |
+| 2026-11-13 | Phase 0: read historical `Nuisance`, `GalaxyPhotoDist`, `SpectroCov`, `config.py`, `.dat` tables and old YAMLs | `dn3` identified as dN/dz per deg^2; old and new `n_density`, `volume_survey`, `ngal_per_bin`, photo `dNdz` and photo bias all shown equivalent; assumptions table filled. Remaining Phase 0 item: per-figure mapping of `vfinal/` matrices |
+| 2026-11-13 | Phase 1: migrated DESI BGS/ELG, Rubin, SKAO photo/spectro and IM x DESI-ELG specs; fixed the missing `Ps_5`; added `tests/survey_specs_test.py` | Six YAMLs parse, are per-bin consistent, load through `FisherMatrix`, and a DESI BGS `GCsp` forecast runs end-to-end. Next: Phase 2 observable validation |

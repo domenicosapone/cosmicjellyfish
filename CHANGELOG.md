@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Survey validation roadmap `docs/SURVEY_VALIDATION_ROADMAP.md` for the non-Euclid
+  configurations (DESI, Rubin/LSST, SKAO and Planck), including the provenance map
+  that traces each historical input to the current specification schema.
+- Historical `-SKAOPaper` survey specifications transcribed from the SKAO forecast
+  project of Casas et al. (2023): `DESI-BGS-SKAOPaper`, `DESI-ELG-SKAOPaper`,
+  `Rubin-Photometric-SKAOPaper`, `SKAO-Photometric-SKAOPaper`,
+  `SKAO-Spectroscopic-SKAOPaper` and `SKAO-IM-Redbook-DESI-ELG`. They are opt-in
+  files under `other_survey_specifications/` and do not change any existing default.
+
 ## [v2.0.0](https://github.com/santiagocasas/cosmicjellyfish/releases/tag/v2.0.0) - 2026-11-12
 
 ### Fixed
