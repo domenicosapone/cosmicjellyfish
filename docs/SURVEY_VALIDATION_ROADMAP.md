@@ -263,7 +263,7 @@ Tasks
       and new GR forecasts (Tab. 7.1 marks each row `ok` or `expected`, with the reason;
       Tab. 7.2 holds the new GR numbers).
 - [x] CHANGELOG entry (updated per step).
-- [ ] Final review pass and PR.
+- [x] Final review pass; PR body prepared (branch `feature/survey-validation`).
 
 Derivative-step scan, DESI ELG `GCsp` (`sigma(Omegam)`, `sigma(sigma8)`; nuisance
 marginalised). The spectroscopic run is not converged at the 1% step used in the first
@@ -503,3 +503,4 @@ is next.
 | 2026-11-13 | Phase 3: added `scripts/validation/run_survey_forecasts.py`; ran all 10 probe configurations at a common GR fiducial in LCDM and w0waCDM | Tab. 7.2 filled. Full LCDM set takes ~2 min, w0waCDM ~3 min (Planck/CAMB dominates). Rubin 3x2pt is stronger than the shipped Euclid photometric configuration because of its wider WL scale cuts; SKAO IM x DESI-ELG is cross-only. Next: Phase 4 scripts/plots/notebook/docs |
 | 2026-11-13 | Phase 4 (docs half): added `scripts/validation/plot_survey_validation.py`, `docs/source/survey_validation.md`, `notebooks/09-Survey-validation.ipynb` and the four committed figures under `docs/source/_static/survey_validation/` | Figures regenerate from the JSON reports; the notebook executes top-to-bottom (three quick cases + observable validation, ~2 min). Strict docs build still to run. Next: paper figure/paragraph, then Phase 5 checks |
 | 2026-11-13 | Phase 4 (paper half) + Phase 5: paper figure/paragraph, strict docs build, covariance tests, derivative-step and resolution scan | `paper/figures/fig4_survey_comparison.png` and the JOSS paragraph added; `sphinx -W` passes. New `tests/survey_covariance_test.py` covers the DESI-ELG and SKAO x DESI covariance paths. The step scan showed the GCsp derivatives were under-converged at 1%; Tab. 7.2 was regenerated at 0.2% and the docs updated. Next: final review and PR |
+| 2026-11-13 | Final review: roadmap numbers, docs page, figures and notebook regenerated at the 0.2% step; 22 survey tests, ruff/black/isort and `sphinx -W` green | Branch ready to push as one PR |
