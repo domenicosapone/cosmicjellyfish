@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/SURVEY_VALIDATION_ROADMAP.md`.
 - Fast guard tests `tests/survey_observables_validation_test.py` for the reference formulas
   and the historical Fig. 1 table.
+- Survey forecast comparison harness `scripts/validation/run_survey_forecasts.py`, which runs
+  Euclid, Rubin/LSST, DESI, SKAO (photometric, HI galaxies, intensity mapping and the
+  IM x DESI-ELG cross-spectrum) and a Planck-like CMB forecast on a common GR fiducial in
+  both LCDM and w0waCDM, reports marginalised errors and dark-energy figures of merit, and
+  writes Markdown/JSON summaries. Results are recorded in `docs/SURVEY_VALIDATION_ROADMAP.md`.
 
 ## [v2.0.0](https://github.com/santiagocasas/cosmicjellyfish/releases/tag/v2.0.0) - 2026-11-12
 

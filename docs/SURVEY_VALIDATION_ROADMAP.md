@@ -201,18 +201,24 @@ LCDM, the same `k`/`mu` sampling and the same derivative method.
 
 Tasks
 
-- [ ] **Photo:** Euclid vs Rubin, `GCph`, `WL`, and the 3x2pt combination.
-- [ ] **Spectro:** Euclid vs DESI BGS and vs DESI ELG, separately first, then combined.
-- [ ] **SKAO:** continuum photometric, HI galaxy clustering, intensity mapping
+- [x] **Photo:** Euclid vs Rubin, `GCph`, `WL`, and the 3x2pt combination.
+- [x] **Spectro:** Euclid vs DESI BGS and vs DESI ELG, separately first, then combined.
+- [x] **SKAO:** continuum photometric, HI galaxy clustering, intensity mapping
       individually, then the IM x DESI-ELG cross-correlation on aligned bins.
-- [ ] **Planck:** rerun the shipped CMB configuration and compare against the published
-      covariance where reference inputs exist.
-- [ ] For every combination, state explicitly whether it is a cross-spectrum-only Fisher
+- [x] **Planck:** rerun the shipped CMB configuration.
+- [ ] **Planck (follow-up):** compare against the published covariance / likelihood
+      where reference inputs exist. The shipped `Planck.yaml` is a single-channel
+      approximation with `lmax = 1500` and no lensing, so this is a separate task.
+- [x] For every combination, state explicitly whether it is a cross-spectrum-only Fisher
       or a genuine joint auto + cross analysis. Check bin overlaps, cross-covariances and
       distinct nuisance names before adding information.
 
+Implementation: `scripts/validation/run_survey_forecasts.py` (LCDM and w0waCDM reports,
+JSON + Markdown). The numbers are in Tab. 7.2.
+
 **Exit criterion.** A results table with a stable parameter set per probe, plus the
-warnings that apply to each combination.
+warnings that apply to each combination. **Met** for the GR probes; the Planck
+published-covariance comparison is tracked as a follow-up.
 
 ### Phase 4 - Scripts, plots, notebook, docs, paper
 
@@ -363,20 +369,67 @@ fiducial `Omegam=0.32, Omegab=0.05, h=0.67, ns=0.96, sigma8=0.822`.
 
 ### 7.2 GR forecast comparison (Phase 3)
 
-Parameter set: `10^9As, Omegam, Omegab, h, ns` (add `w0, wa` only if the backend
-supports it), bias and shot noise marginalised.
+Common setup for every row: GR fiducial `Omegam=0.32, Omegab=0.05, h=0.67, ns=0.96,
+sigma8=0.822`, massless neutrinos, flat LCDM, `derivatives = 3PT`, relative steps `0.01`,
+same `k`/`mu` sampling. Bias, shot-noise and (where present) `sigma_v`/`sigma_p` nuisances
+are marginalised before the errors are quoted. Produced by
+`uv run python scripts/validation/run_survey_forecasts.py` (add `--model w0waCDM` for the
+dark-energy table). Combinations are the sum of independent nuisance-marginalised blocks.
 
-| Survey | Probe(s) | sigma(Omegam) | sigma(h) | sigma(ns) | sigma(10^9As) | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| Euclid | GCph+WL | TBD | TBD | TBD | TBD | reference |
-| Rubin | GCph+WL | TBD | TBD | TBD | TBD | |
-| Euclid | GCsp | TBD | TBD | TBD | TBD | reference |
-| DESI BGS | GCsp | TBD | TBD | TBD | TBD | |
-| DESI ELG | GCsp | TBD | TBD | TBD | TBD | |
-| SKAO HI | GCsp | TBD | TBD | TBD | TBD | |
-| SKAO | IM | TBD | TBD | TBD | TBD | |
-| SKAO x DESI | IM x ELG | TBD | TBD | TBD | TBD | cross-spectrum only |
-| Planck | CMB | TBD | TBD | TBD | TBD | |
+Marginalised 1-sigma errors, LCDM (`sigma8`, not `10^9As`, is the free amplitude here so
+that every backend can run it):
+
+| Survey | Probe(s) | sigma(Omegam) | sigma(Omegab) | sigma(h) | sigma(ns) | sigma(sigma8) | Time (s) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Euclid | GCph+WL (3x2pt) | 0.002414 | 0.002183 | 0.01733 | 0.009735 | 0.002995 | 10 |
+| Rubin/LSST | GCph+WL (3x2pt) | 0.001250 | 0.001990 | 0.01185 | 0.004998 | 0.001591 | 9 |
+| Euclid | GCsp | 0.004577 | 0.001600 | 0.01432 | 0.010740 | 0.005023 | 3 |
+| DESI BGS | GCsp | 0.012870 | 0.003736 | 0.01580 | 0.036330 | 0.014990 | 3 |
+| DESI ELG | GCsp | 0.004852 | 0.001524 | 0.01024 | 0.009424 | 0.003894 | 12 |
+| DESI BGS + ELG | GCsp | 0.004540 | 0.001411 | 0.008595 | 0.009122 | 0.003769 | 15 |
+| SKAO | GCph+WL (3x2pt) | 0.005564 | 0.006214 | 0.04659 | 0.026970 | 0.007380 | 9 |
+| SKAO HI | GCsp | 0.024750 | 0.008156 | 0.04531 | 0.072600 | 0.027120 | 3 |
+| SKAO | IM | 0.008187 | 0.003635 | 0.03860 | 0.016870 | 0.006163 | 6 |
+| SKAO x DESI | IM x ELG | 0.011530 | 0.004906 | 0.05048 | 0.031540 | 0.042750 | 18 |
+| Planck-like | CMB TT+TE+EE | 0.016080 | 0.001298 | 0.01158 | 0.006925 | 0.009436 | 43 |
+| Euclid | GCph+WL + GCsp | 0.002135 | 0.001291 | 0.01104 | 0.007213 | 0.002573 | 13 |
+
+Marginalised 1-sigma errors, w0waCDM (`w0 = -1`, `wa = 0`; `FoM = 1/sqrt(det Cov(w0,wa))`):
+
+| Survey | Probe(s) | sigma(Omegam) | sigma(Omegab) | sigma(h) | sigma(ns) | sigma(sigma8) | sigma(w0) | sigma(wa) | FoM(w0,wa) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Euclid | GCph+WL (3x2pt) | 0.003645 | 0.002709 | 0.02307 | 0.01325 | 0.004178 | 0.04152 | 0.1524 | 377 |
+| Rubin/LSST | GCph+WL (3x2pt) | 0.002538 | 0.002259 | 0.01349 | 0.005308 | 0.002528 | 0.02794 | 0.09157 | 897 |
+| Euclid | GCsp | 0.013150 | 0.002142 | 0.02621 | 0.01825 | 0.010960 | 0.11170 | 0.3426 | 79 |
+| DESI BGS | GCsp | 0.019820 | 0.004265 | 0.02698 | 0.04753 | 0.026530 | 0.25320 | 1.187 | 10 |
+| DESI ELG | GCsp | 0.011010 | 0.001806 | 0.01755 | 0.01623 | 0.008536 | 0.08592 | 0.3032 | 104 |
+| SKAO | GCph+WL (3x2pt) | 0.016890 | 0.006851 | 0.05214 | 0.02760 | 0.013570 | 0.19310 | 0.5682 | 26 |
+| SKAO HI | GCsp | 0.035320 | 0.008893 | 0.05708 | 0.08392 | 0.043740 | 0.46720 | 2.372 | 3 |
+| SKAO | IM | 0.013630 | 0.004016 | 0.04534 | 0.02669 | 0.011720 | 0.09270 | 0.3485 | 66 |
+| SKAO x DESI | IM x ELG | 0.020450 | 0.005297 | 0.06693 | 0.04884 | 0.053680 | 0.20810 | 0.6748 | 20 |
+| Planck-like | CMB TT+TE+EE | 0.355000 | 0.05601 | 0.37340 | 0.007918 | 0.381300 | 3.89300 | 13.39 | 0.1 |
+| DESI | BGS + ELG | 0.009624 | 0.001663 | 0.01471 | 0.01536 | 0.008126 | 0.08136 | 0.2937 | 42 |
+| Euclid | GCph+WL + GCsp | 0.003513 | 0.001680 | 0.01732 | 0.01072 | 0.003904 | 0.03892 | 0.1393 | 185 |
+
+How to read these tables:
+
+* **Rubin photometric beats the shipped Euclid photometric configuration on every
+  parameter.** This is not a bug: the historical Rubin specification uses wider scale cuts
+  (`lmax_WL = 5000` vs `1500` for the Euclid ISTF file) and a slightly different sky
+  fraction. When comparing surveys, compare the *specifications*, not only the telescope
+  names.
+* **SKAO continuum photometric is weak** because the paper-era file uses `fsky = 0.1166`;
+  its HI-galaxy and IM probes are competitive with each other but far weaker than the
+  optical spectroscopic surveys on shape parameters.
+* **The IM x DESI-ELG row is a cross-spectrum-only Fisher** (auto-spectra are not
+  included). It is not directly comparable to the IM-only row.
+* **Planck-like** is the shipped single-channel approximation with `lmax = 1500` and no
+  lensing, run with CAMB (the only backend that produces CMB spectra). It is not the real
+  Planck likelihood and is included for completeness. Comparing against the published
+  Planck covariance remains open (see Phase 3).
+* All runs used `code = "symbolic"` except Planck (`code = "camb"`). The comparison is
+  therefore *not* a backend comparison; the Phase 1/2 checks show the observables agree
+  across backends.
 
 ### 7.3 SKAO paper cross-check (GR-only)
 
@@ -399,8 +452,9 @@ numbers are MG constraints and are **not** targets here.
 - [ ] `notebooks/NN-survey-validation.ipynb` (executed)
 - [ ] `docs/source/survey_validation.md` + `user_guide.md` link
 - [ ] Figures committed under `docs/source/_static/survey_validation/`
-- [ ] Tests under `tests/` for configs and observables
-      (configs done: `tests/survey_specs_test.py`; observables pending)
+- [x] Tests under `tests/` for configs, observables and script helpers
+      (`tests/survey_specs_test.py`, `tests/survey_observables_validation_test.py`,
+      `tests/survey_forecast_script_test.py`)
 - [x] CHANGELOG entry (updated per step)
 - [ ] `paper/` figure + paragraph
 - [ ] PR
@@ -418,3 +472,4 @@ is next.
 | 2026-11-13 | Phase 0: read historical `Nuisance`, `GalaxyPhotoDist`, `SpectroCov`, `config.py`, `.dat` tables and old YAMLs | `dn3` identified as dN/dz per deg^2; old and new `n_density`, `volume_survey`, `ngal_per_bin`, photo `dNdz` and photo bias all shown equivalent; assumptions table filled. Remaining Phase 0 item: per-figure mapping of `vfinal/` matrices |
 | 2026-11-13 | Phase 1: migrated DESI BGS/ELG, Rubin, SKAO photo/spectro and IM x DESI-ELG specs; fixed the missing `Ps_5`; added `tests/survey_specs_test.py` | Six YAMLs parse, are per-bin consistent, load through `FisherMatrix`, and a DESI BGS `GCsp` forecast runs end-to-end. Next: Phase 2 observable validation |
 | 2026-11-13 | Phase 2: added `scripts/validation/survey_observable_reference.py`, `scripts/validation/validate_survey_observables.py` and `tests/survey_observables_validation_test.py` | 33 machinery checks agree at machine precision (density, volume, bias, `P_gg`, IM thermodynamics, beam, noise, `P_II`, `P_Ig`, photo `dNdz` and bin counts). Fig. 1 diagnostic: shape agrees to <= 1.5% over `0.005 <= k <= 0.05` 1/Mpc with a 0.5%-6.8% amplitude offset from the MG fiducial. Next: Phase 3 forecast comparisons |
+| 2026-11-13 | Phase 3: added `scripts/validation/run_survey_forecasts.py`; ran all 10 probe configurations at a common GR fiducial in LCDM and w0waCDM | Tab. 7.2 filled. Full LCDM set takes ~2 min, w0waCDM ~3 min (Planck/CAMB dominates). Rubin 3x2pt is stronger than the shipped Euclid photometric configuration because of its wider WL scale cuts; SKAO IM x DESI-ELG is cross-only. Next: Phase 4 scripts/plots/notebook/docs |
