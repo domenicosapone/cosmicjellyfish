@@ -45,22 +45,13 @@ COMMON_FIDUCIAL = {
     "ns": 0.96,
     "sigma8": 0.822,
 }
-LCDM_FREE = {
-    "Omegam": 0.01,
-    "Omegab": 0.01,
-    "h": 0.01,
-    "ns": 0.01,
-    "sigma8": 0.01,
-}
-W0WA_FREE = {
-    "Omegam": 0.01,
-    "Omegab": 0.01,
-    "h": 0.01,
-    "ns": 0.01,
-    "sigma8": 0.01,
-    "w0": 0.02,
-    "wa": 0.02,
-}
+# Relative finite-difference steps. The spectroscopic derivatives need a smaller step
+# than the photometric ones: at 1% the GCsp Fisher matrix is not converged (sigma8 moves
+# by ~25% between 1% and 0.2%), while 0.2% agrees with 0.05% to better than 0.1%. The
+# photometric probes are stable at the 0.03% level between the two steps.
+DERIVATIVE_STEP = 0.002
+LCDM_FREE = dict.fromkeys(("Omegam", "Omegab", "h", "ns", "sigma8"), DERIVATIVE_STEP)
+W0WA_FREE = {**LCDM_FREE, "w0": 0.02, "wa": 0.02}
 BASE_OPTIONS = {
     "code": "symbolic",
     "nonlinear": True,

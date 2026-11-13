@@ -250,17 +250,37 @@ regenerable from a committed script.
 
 Tasks
 
-- [ ] Tests for every shipped survey configuration: loading, package data, bin
-      consistency, parameter-name completeness and uniqueness.
-- [ ] Tests for the observable and covariance paths touched by the new configurations.
-- [ ] Quick end-to-end forecast per survey as a smoke test; full forecasts run separately
-      with recorded timings and settings.
-- [ ] Derivative-step and resolution checks; Fisher symmetry and conditioning checks;
-      nuisance-marginalisation checks.
-- [ ] Results table separating historical MG references, matched historical observables
-      and new GR forecasts.
+- [x] Tests for every shipped survey configuration: loading, package data, bin
+      consistency, parameter-name completeness and uniqueness
+      (`tests/survey_specs_test.py`).
+- [x] Tests for the observable and covariance paths touched by the new configurations
+      (`tests/survey_observables_validation_test.py`, `tests/survey_covariance_test.py`).
+- [x] Quick end-to-end forecast per survey as a smoke test; full forecasts run separately
+      with recorded timings and settings (Phase 3 timings above, from a full run).
+- [x] Derivative-step and resolution checks; Fisher symmetry and conditioning checks;
+      nuisance-marginalisation checks. See the step scan below.
+- [x] Results table separating historical MG references, matched historical observables
+      and new GR forecasts (Tab. 7.1 marks each row `ok` or `expected`, with the reason;
+      Tab. 7.2 holds the new GR numbers).
 - [x] CHANGELOG entry (updated per step).
 - [ ] Final review pass and PR.
+
+Derivative-step scan, DESI ELG `GCsp` (`sigma(Omegam)`, `sigma(sigma8)`; nuisance
+marginalised). The spectroscopic run is not converged at the 1% step used in the first
+pass; the 0.2% step agrees with 0.05% at the 0.1% level and is used for Tab. 7.2.
+
+| Step | sigma(Omegam) | sigma(sigma8) |
+| --- | --- | --- |
+| 0.01 | 0.004833 | 0.003894 |
+| 0.005 | 0.005018 | 0.005361 |
+| 0.002 | 0.005036 | 0.005353 |
+| 0.001 | 0.005034 | 0.005351 |
+| 0.0005 | 0.005034 | 0.005350 |
+
+Resolution check at the 1% step (96 k x 9 mu vs 128 k x 12 mu): `sigma(Omegam)` changes
+from 0.004833 to 0.004825 and `sigma(sigma8)` from 0.003894 to 0.003895, i.e. below 0.2%.
+The photometric probes are stable: Euclid `GCph+WL` gives `0.002414`/`0.002995` at 1% and
+`0.002415`/`0.002995` at 0.2%.
 
 **Exit criterion.** Green CI, strict docs build, and a reviewer can reproduce at least
 one number per survey from the docs page alone.
@@ -375,8 +395,11 @@ fiducial `Omegam=0.32, Omegab=0.05, h=0.67, ns=0.96, sigma8=0.822`.
 ### 7.2 GR forecast comparison (Phase 3)
 
 Common setup for every row: GR fiducial `Omegam=0.32, Omegab=0.05, h=0.67, ns=0.96,
-sigma8=0.822`, massless neutrinos, flat LCDM, `derivatives = 3PT`, relative steps `0.01`,
-same `k`/`mu` sampling. Bias, shot-noise and (where present) `sigma_v`/`sigma_p` nuisances
+sigma8=0.822`, massless neutrinos, flat LCDM, `derivatives = 3PT`, relative steps `0.002`,
+same `k`/`mu` sampling. A step scan (Tab. in Phase 5) showed that the GCsp derivatives
+need `0.002`: at `0.01` the spectroscopic `sigma(sigma8)` is biased low by 20-35%, while
+`0.002` and `0.0005` agree to better than 0.1%. The photometric probes are stable at the
+0.03% level between `0.01` and `0.002`. Bias, shot-noise and (where present) `sigma_v`/`sigma_p` nuisances
 are marginalised before the errors are quoted. Produced by
 `uv run python scripts/validation/run_survey_forecasts.py` (add `--model w0waCDM` for the
 dark-energy table). Combinations are the sum of independent nuisance-marginalised blocks.
@@ -384,37 +407,37 @@ dark-energy table). Combinations are the sum of independent nuisance-marginalise
 Marginalised 1-sigma errors, LCDM (`sigma8`, not `10^9As`, is the free amplitude here so
 that every backend can run it):
 
-| Survey | Probe(s) | sigma(Omegam) | sigma(Omegab) | sigma(h) | sigma(ns) | sigma(sigma8) | Time (s) |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Euclid | GCph+WL (3x2pt) | 0.002414 | 0.002183 | 0.01733 | 0.009735 | 0.002995 | 10 |
-| Rubin/LSST | GCph+WL (3x2pt) | 0.001250 | 0.001990 | 0.01185 | 0.004998 | 0.001591 | 9 |
-| Euclid | GCsp | 0.004577 | 0.001600 | 0.01432 | 0.010740 | 0.005023 | 3 |
-| DESI BGS | GCsp | 0.012870 | 0.003736 | 0.01580 | 0.036330 | 0.014990 | 3 |
-| DESI ELG | GCsp | 0.004852 | 0.001524 | 0.01024 | 0.009424 | 0.003894 | 12 |
-| DESI BGS + ELG | GCsp | 0.004540 | 0.001411 | 0.008595 | 0.009122 | 0.003769 | 15 |
-| SKAO | GCph+WL (3x2pt) | 0.005564 | 0.006214 | 0.04659 | 0.026970 | 0.007380 | 9 |
-| SKAO HI | GCsp | 0.024750 | 0.008156 | 0.04531 | 0.072600 | 0.027120 | 3 |
-| SKAO | IM | 0.008187 | 0.003635 | 0.03860 | 0.016870 | 0.006163 | 6 |
-| SKAO x DESI | IM x ELG | 0.011530 | 0.004906 | 0.05048 | 0.031540 | 0.042750 | 18 |
-| Planck-like | CMB TT+TE+EE | 0.016080 | 0.001298 | 0.01158 | 0.006925 | 0.009436 | 43 |
-| Euclid | GCph+WL + GCsp | 0.002135 | 0.001291 | 0.01104 | 0.007213 | 0.002573 | 13 |
+| Survey | Probe(s) | sigma(Omegam) | sigma(Omegab) | sigma(h) | sigma(ns) | sigma(sigma8) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Euclid | GCph+WL (3x2pt) | 0.00241449 | 0.00218174 | 0.0173254 | 0.0097284 | 0.00299523 |
+| Rubin/LSST | GCph+WL (3x2pt) | 0.00124975 | 0.00198969 | 0.0118478 | 0.00499616 | 0.00159136 |
+| Euclid | GCsp | 0.00478616 | 0.00131012 | 0.0105564 | 0.00898969 | 0.00626847 |
+| DESI BGS | GCsp | 0.0128422 | 0.00389834 | 0.0169271 | 0.0330358 | 0.0212149 |
+| DESI ELG | GCsp | 0.0050355 | 0.0014544 | 0.00843915 | 0.00934154 | 0.00535276 |
+| DESI BGS + ELG | GCsp | 0.004688 | 0.00136266 | 0.00755256 | 0.00898907 | 0.00519011 |
+| SKAO | GCph+WL (3x2pt) | 0.00556561 | 0.00621195 | 0.0465785 | 0.0269691 | 0.00738337 |
+| SKAO HI | GCsp | 0.0243804 | 0.00861922 | 0.0446646 | 0.0580188 | 0.0373749 |
+| SKAO | IM | 0.00795203 | 0.00259429 | 0.0179688 | 0.00861456 | 0.00740573 |
+| SKAO x DESI | IM x ELG | 0.0129225 | 0.00336428 | 0.0283735 | 0.0176025 | 0.042502 |
+| Planck-like | CMB TT+TE+EE | 0.016075 | 0.0012949 | 0.0115754 | 0.00693771 | 0.00942461 |
+| Euclid | GCph+WL + GCsp | 0.00215571 | 0.00112318 | 0.00901485 | 0.0066024 | 0.00270256 |
 
 Marginalised 1-sigma errors, w0waCDM (`w0 = -1`, `wa = 0`; `FoM = 1/sqrt(det Cov(w0,wa))`):
 
 | Survey | Probe(s) | sigma(Omegam) | sigma(Omegab) | sigma(h) | sigma(ns) | sigma(sigma8) | sigma(w0) | sigma(wa) | FoM(w0,wa) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Euclid | GCph+WL (3x2pt) | 0.003645 | 0.002709 | 0.02307 | 0.01325 | 0.004178 | 0.04152 | 0.1524 | 377 |
-| Rubin/LSST | GCph+WL (3x2pt) | 0.002538 | 0.002259 | 0.01349 | 0.005308 | 0.002528 | 0.02794 | 0.09157 | 897 |
-| Euclid | GCsp | 0.013150 | 0.002142 | 0.02621 | 0.01825 | 0.010960 | 0.11170 | 0.3426 | 79 |
-| DESI BGS | GCsp | 0.019820 | 0.004265 | 0.02698 | 0.04753 | 0.026530 | 0.25320 | 1.187 | 10 |
-| DESI ELG | GCsp | 0.011010 | 0.001806 | 0.01755 | 0.01623 | 0.008536 | 0.08592 | 0.3032 | 104 |
-| SKAO | GCph+WL (3x2pt) | 0.016890 | 0.006851 | 0.05214 | 0.02760 | 0.013570 | 0.19310 | 0.5682 | 26 |
-| SKAO HI | GCsp | 0.035320 | 0.008893 | 0.05708 | 0.08392 | 0.043740 | 0.46720 | 2.372 | 3 |
-| SKAO | IM | 0.013630 | 0.004016 | 0.04534 | 0.02669 | 0.011720 | 0.09270 | 0.3485 | 66 |
-| SKAO x DESI | IM x ELG | 0.020450 | 0.005297 | 0.06693 | 0.04884 | 0.053680 | 0.20810 | 0.6748 | 20 |
-| Planck-like | CMB TT+TE+EE | 0.355000 | 0.05601 | 0.37340 | 0.007918 | 0.381300 | 3.89300 | 13.39 | 0.1 |
-| DESI | BGS + ELG | 0.009624 | 0.001663 | 0.01471 | 0.01536 | 0.008126 | 0.08136 | 0.2937 | 42 |
-| Euclid | GCph+WL + GCsp | 0.003513 | 0.001680 | 0.01732 | 0.01072 | 0.003904 | 0.03892 | 0.1393 | 185 |
+| Euclid | GCph+WL (3x2pt) | 0.0036437 | 0.00270685 | 0.023065 | 0.013234 | 0.00417464 | 0.041499 | 0.152296 | 378 |
+| Rubin/LSST | GCph+WL (3x2pt) | 0.0025377 | 0.00225872 | 0.0134829 | 0.00530628 | 0.00252884 | 0.027936 | 0.0915612 | 897 |
+| Euclid | GCsp | 0.0143087 | 0.00229787 | 0.0181856 | 0.0139647 | 0.0136481 | 0.116831 | 0.361461 | 83.9 |
+| DESI BGS | GCsp | 0.0210305 | 0.00417824 | 0.0275829 | 0.0400758 | 0.031189 | 0.249038 | 1.20718 | 10.5 |
+| DESI ELG | GCsp | 0.012488 | 0.00189264 | 0.0150732 | 0.0152487 | 0.0114671 | 0.0936742 | 0.32811 | 99.5 |
+| DESI BGS + ELG | GCsp | 0.0107376 | 0.00172401 | 0.0132271 | 0.0142519 | 0.0107627 | 0.0876769 | 0.316623 | 36 |
+| SKAO | GCph+WL (3x2pt) | 0.01689 | 0.00684925 | 0.0521334 | 0.0275988 | 0.0135739 | 0.193051 | 0.568189 | 25.9 |
+| SKAO HI | GCsp | 0.037852 | 0.00910093 | 0.0551461 | 0.0647451 | 0.0563283 | 0.469886 | 2.44807 | 2.92 |
+| SKAO | IM | 0.0170774 | 0.00327699 | 0.0253228 | 0.0158367 | 0.012887 | 0.111373 | 0.37049 | 55 |
+| SKAO x DESI | IM x ELG | 0.0272612 | 0.00476902 | 0.0438979 | 0.02617 | 0.0536757 | 0.240052 | 0.733385 | 17.2 |
+| Planck-like | CMB TT+TE+EE | 0.476852 | 0.0750947 | 0.501387 | 0.00799934 | 0.478239 | 4.61783 | 14.0196 | 0.0429 |
+| Euclid | GCph+WL + GCsp | 0.00353101 | 0.00175178 | 0.0142807 | 0.0096058 | 0.00399207 | 0.0391053 | 0.140347 | 182 |
 
 How to read these tables:
 
@@ -479,3 +502,4 @@ is next.
 | 2026-11-13 | Phase 2: added `scripts/validation/survey_observable_reference.py`, `scripts/validation/validate_survey_observables.py` and `tests/survey_observables_validation_test.py` | 33 machinery checks agree at machine precision (density, volume, bias, `P_gg`, IM thermodynamics, beam, noise, `P_II`, `P_Ig`, photo `dNdz` and bin counts). Fig. 1 diagnostic: shape agrees to <= 1.5% over `0.005 <= k <= 0.05` 1/Mpc with a 0.5%-6.8% amplitude offset from the MG fiducial. Next: Phase 3 forecast comparisons |
 | 2026-11-13 | Phase 3: added `scripts/validation/run_survey_forecasts.py`; ran all 10 probe configurations at a common GR fiducial in LCDM and w0waCDM | Tab. 7.2 filled. Full LCDM set takes ~2 min, w0waCDM ~3 min (Planck/CAMB dominates). Rubin 3x2pt is stronger than the shipped Euclid photometric configuration because of its wider WL scale cuts; SKAO IM x DESI-ELG is cross-only. Next: Phase 4 scripts/plots/notebook/docs |
 | 2026-11-13 | Phase 4 (docs half): added `scripts/validation/plot_survey_validation.py`, `docs/source/survey_validation.md`, `notebooks/09-Survey-validation.ipynb` and the four committed figures under `docs/source/_static/survey_validation/` | Figures regenerate from the JSON reports; the notebook executes top-to-bottom (three quick cases + observable validation, ~2 min). Strict docs build still to run. Next: paper figure/paragraph, then Phase 5 checks |
+| 2026-11-13 | Phase 4 (paper half) + Phase 5: paper figure/paragraph, strict docs build, covariance tests, derivative-step and resolution scan | `paper/figures/fig4_survey_comparison.png` and the JOSS paragraph added; `sphinx -W` passes. New `tests/survey_covariance_test.py` covers the DESI-ELG and SKAO x DESI covariance paths. The step scan showed the GCsp derivatives were under-converged at 1%; Tab. 7.2 was regenerated at 0.2% and the docs updated. Next: final review and PR |
