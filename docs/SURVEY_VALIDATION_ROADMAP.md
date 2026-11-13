@@ -171,8 +171,11 @@ Rubin, SKAO photometric, SKAO spectroscopic and the IM x DESI-ELG cross.
 
 Tasks
 
-- [x] **Photo:** compare `n(z)`, bin populations and angular spectra for Rubin and SKAO
-      photometric, with matched photo-z, bias, IA and scale cuts.
+- [ ] **Photo (deferred):** compare `n(z)` and bin populations for Rubin and SKAO
+      photometric, with matched photo-z, bias and scale cuts. Done: `dN/dz` shape and the
+      per-bin galaxy counts. Not done: a direct comparison of the angular kernels and
+      spectra against the historical project; those paths are exercised by the existing
+      photometric observable tests, so this harness does not claim a spectra validation.
 - [x] **GCsp:** compare bin density, bias, survey volume and `P_gg(k, mu, z)` for DESI
       BGS, DESI ELG and SKAO HI galaxies.
 - [x] **IM:** compare `b_HI(z)`, `Omega_HI(z)`, `Tbar_b(z)`, the beam and the noise
@@ -188,16 +191,19 @@ transcription of the historical algebra) and `scripts/validation/validate_survey
 The Tab. 7.1 numbers come from `uv run python scripts/validation/validate_survey_observables.py`.
 
 **Exit criterion.** Every observable either matches within a stated tolerance or has a
-documented, quantified explanation for the difference. **Met:** all 33 machinery checks
-agree at machine precision; the Fig. 1 curves agree in shape and show the expected few-percent
-modified-gravity offset (see Tab. 7.1).
+documented, quantified explanation for the difference. **Met for the spectroscopic and
+intensity-mapping observables and for the photometric redshift distribution and counts:**
+all 33 machinery checks are algebra-level checks (the reference shares only the cosmology
+object) and agree at machine precision; the Fig. 1 curves agree in shape and show the
+expected few-percent modified-gravity offset (see Tab. 7.1). **Not met for photometric
+angular spectra**, which are deliberately out of scope here.
 
 ### Phase 3 - Forecast comparisons
 
 **Goal.** A common GR fiducial and parameter basis, so survey comparisons are fair.
 
-Common setup: `Omegam 0.32, Omegab 0.05, h 0.67, ns 0.96`, massless neutrinos, flat
-LCDM, the same `k`/`mu` sampling and the same derivative method.
+Common setup: `Omegam 0.32, Omegab 0.05, h 0.67, ns 0.96`, `mnu = 0.06` eV held fixed
+(not varied), flat LCDM, the same `k`/`mu` sampling and the same derivative method.
 
 Tasks
 
@@ -306,14 +312,16 @@ one number per survey from the docs page alone.
 | --- | --- | --- | --- | --- |
 | 1 | SKAO photometric scale cuts differ between historical (`lmax_GCph` 1500, `lmax_WL` 5000) and shipped (750/3000) | `SKAO-Photometric-Redbook.yaml` | 1 | **resolved** - paper-era cuts kept in `SKAO-Photometric-SKAOPaper.yaml` |
 | 2 | SKAO spectro defines 5 z-bins but only `Ps_1..Ps_4` shot-noise keys | `SKAO-Spectroscopic-Redbook.yaml` | 1 | **fixed** - added `Ps_5`; covered by `tests/survey_specs_test.py` |
-| 3 | IM config has both `area_survey_IM: 5000` and `fsky_IM: 0.48`; the config prefers `fsky_IM`, the IM noise uses `fsky_IM`, but `SpectroCov.volume_survey` uses `fsky_spectro` | `SKAO-IM-Redbook.yaml`, `spectro_cov.py` | 1-2 | open |
-| 4 | Historical IM x DESI-ELG cross used bins aligned to DESI ELG; current covariance uses `intersect1d` on bins/mids | `spectro_cov.py` | 2-3 | open |
-| 5 | `observables=['GCsp','IM']` selects the cross-spectrum only, not auto + cross | `fishermatrix/cosmicfish.py` | 3 | open |
+| 3 | IM config has both `area_survey_IM: 5000` and `fsky_IM: 0.48`; the IM noise uses `fsky_IM` while `SpectroCov.volume_survey` used `fsky_spectro` | `SKAO-IM-Redbook.yaml`, `spectro_cov.py` | 1-2 | **fixed** - `SpectroCov.fsky_volume` now uses `fsky_IM` for IM-only and the smaller of the two fractions for a cross-spectrum; covered by `tests/survey_covariance_test.py` |
+| 4 | Historical IM x DESI-ELG cross used bins aligned to DESI ELG; current covariance uses `intersect1d` on bins/mids | `spectro_cov.py` | 2-3 | **resolved** - the aligned `SKAO-IM-Redbook-DESI-ELG.yaml` gives 11 matching bins; the covariance test pins the overlap and the effective volume |
+| 5 | `observables=['GCsp','IM']` selects the cross-spectrum only, not auto + cross | `fishermatrix/cosmicfish.py` | 3 | **documented** - stated in the docs page, the roadmap and the paper; not changed |
 | 6 | Old runs used external MGCAMB tables, unavailable here | historical project | n/a | documented |
 | 7 | `surveyName="DESI"` fails with a missing-file error | `config.py` | 1 | **documented** - requires an explicit `survey_name_spectro` option |
 | 8 | Rubin and DESI have code branches but no shipped YAML | `config.py`, docs | 1 | **resolved** - `-SKAOPaper` files shipped |
-| 9 | `kmax_IM` units unconfirmed | `docs/KNOWN_ISSUES.md` | 2 | open |
-| 10 | Survey-table numbers in the docs have not been re-checked against the YAMLs | docs | 1 | open |
+| 9 | `kmax_IM`/`kmin_IM` are not consumed anywhere | `fishermatrix/cosmicfish.py`, specs | 2 | **traced and documented** - the historical project also used `kmin_GCsp`/`kmax_GCsp` for IM, so the IM forecasts inherit the GCsp range by design; the unused YAML entries are flagged on the docs page |
+| 10 | Survey-table numbers in the docs had not been re-checked against the generated reports | docs | 1 | **fixed** - the LCDM/w0waCDM tables are generated from `results/survey_validation/*.json` |
+| 11 | Photometric angular spectra are not re-compared against the historical project | `scripts/validation` | 2 | **deferred** - the harness checks `dN/dz` and bin counts only; the angular paths are covered by existing photometric tests |
+| 12 | Fisher combinations rebuild each covariance from diagonal errors, dropping parameter correlations | `scripts/validation/run_survey_forecasts.py` | 6 | **fixed** - the script now stores and sums the full marginalised Fisher blocks; covered by a correlated regression test |
 
 ---
 
@@ -408,7 +416,7 @@ fiducial `Omegam=0.32, Omegab=0.05, h=0.67, ns=0.96, sigma8=0.822`.
 ### 7.2 GR forecast comparison (Phase 3)
 
 Common setup for every row: GR fiducial `Omegam=0.32, Omegab=0.05, h=0.67, ns=0.96,
-sigma8=0.822`, massless neutrinos, flat LCDM, `derivatives = 3PT`, relative steps `0.002`,
+sigma8=0.822`, `mnu = 0.06` eV fixed, flat LCDM, `derivatives = 3PT`, relative steps `0.002`,
 same `k`/`mu` sampling. A step scan (Tab. in Phase 5) showed that the three-dimensional clustering derivatives
 (GCsp and IM) need `0.002`: at `0.01` their `sigma(sigma8)` is biased low by 20-38%
 (Euclid GCsp 25%, DESI ELG 37%, SKAO HI 38%, SKAO IM 20%), while `0.002` and `0.0005`
@@ -416,7 +424,11 @@ agree to better than 0.1%. The photometric probes are stable at the
 0.03% level between `0.01` and `0.002`. Bias, shot-noise and (where present) `sigma_v`/`sigma_p` nuisances
 are marginalised before the errors are quoted. Produced by
 `uv run python scripts/validation/run_survey_forecasts.py` (add `--model w0waCDM` for the
-dark-energy table). Combinations are the sum of independent nuisance-marginalised blocks.
+dark-energy table). The report records the resolved settings per case, the fiducial and
+the package versions. Combinations sum the full nuisance-marginalised Fisher blocks of the
+two probes (correlations retained), not their diagonal errors. For IM the survey volume
+uses `fsky_IM` and the cross uses the smaller of the two sky fractions; the IM `k` range is
+inherited from the GCsp settings as in the historical project (see issue 9).
 
 Marginalised 1-sigma errors, LCDM (`sigma8`, not `10^9As`, is the free amplitude here so
 that every backend can run it):
@@ -428,13 +440,13 @@ that every backend can run it):
 | Euclid | GCsp | 0.00478616 | 0.00131012 | 0.0105564 | 0.00898969 | 0.00626847 |
 | DESI BGS | GCsp | 0.0128422 | 0.00389834 | 0.0169271 | 0.0330358 | 0.0212149 |
 | DESI ELG | GCsp | 0.0050355 | 0.0014544 | 0.00843915 | 0.00934154 | 0.00535276 |
-| DESI BGS + ELG | GCsp | 0.004688 | 0.00136266 | 0.00755256 | 0.00898907 | 0.00519011 |
+| DESI BGS + ELG | GCsp | 0.00364307 | 0.00134059 | 0.00624908 | 0.00811367 | 0.00490995 |
 | SKAO | GCph+WL (3x2pt) | 0.00556561 | 0.00621195 | 0.0465785 | 0.0269691 | 0.00738337 |
 | SKAO HI | GCsp | 0.0243804 | 0.00861922 | 0.0446646 | 0.0580188 | 0.0373749 |
-| SKAO | IM | 0.00795203 | 0.00259429 | 0.0179688 | 0.00861456 | 0.00740573 |
+| SKAO | IM | 0.00692111 | 0.00225796 | 0.0156393 | 0.00749774 | 0.00644563 |
 | SKAO x DESI | IM x ELG | 0.0129225 | 0.00336428 | 0.0283735 | 0.0176025 | 0.042502 |
 | Planck-like | CMB TT+TE+EE | 0.016075 | 0.0012949 | 0.0115754 | 0.00693771 | 0.00942461 |
-| Euclid | GCph+WL + GCsp | 0.00215571 | 0.00112318 | 0.00901485 | 0.0066024 | 0.00270256 |
+| Euclid | GCph+WL + GCsp | 0.00189726 | 0.00085189 | 0.00654836 | 0.00426305 | 0.00218619 |
 
 Marginalised 1-sigma errors, w0waCDM (`w0 = -1`, `wa = 0`; `FoM = 1/sqrt(det Cov(w0,wa))`):
 
@@ -445,13 +457,13 @@ Marginalised 1-sigma errors, w0waCDM (`w0 = -1`, `wa = 0`; `FoM = 1/sqrt(det Cov
 | Euclid | GCsp | 0.0143087 | 0.00229787 | 0.0181856 | 0.0139647 | 0.0136481 | 0.116831 | 0.361461 | 83.9 |
 | DESI BGS | GCsp | 0.0210305 | 0.00417824 | 0.0275829 | 0.0400758 | 0.031189 | 0.249038 | 1.20718 | 10.5 |
 | DESI ELG | GCsp | 0.012488 | 0.00189264 | 0.0150732 | 0.0152487 | 0.0114671 | 0.0936742 | 0.32811 | 99.5 |
-| DESI BGS + ELG | GCsp | 0.0107376 | 0.00172401 | 0.0132271 | 0.0142519 | 0.0107627 | 0.0876769 | 0.316623 | 36 |
+| DESI BGS + ELG | GCsp | 0.00936169 | 0.0015053 | 0.0115328 | 0.0138862 | 0.00920108 | 0.0640452 | 0.237508 | 161 |
 | SKAO | GCph+WL (3x2pt) | 0.01689 | 0.00684925 | 0.0521334 | 0.0275988 | 0.0135739 | 0.193051 | 0.568189 | 25.9 |
 | SKAO HI | GCsp | 0.037852 | 0.00910093 | 0.0551461 | 0.0647451 | 0.0563283 | 0.469886 | 2.44807 | 2.92 |
-| SKAO | IM | 0.0170774 | 0.00327699 | 0.0253228 | 0.0158367 | 0.012887 | 0.111373 | 0.37049 | 55 |
+| SKAO | IM | 0.0148634 | 0.00285215 | 0.0220399 | 0.0137836 | 0.0112163 | 0.0969339 | 0.322458 | 72.5 |
 | SKAO x DESI | IM x ELG | 0.0272612 | 0.00476902 | 0.0438979 | 0.02617 | 0.0536757 | 0.240052 | 0.733385 | 17.2 |
 | Planck-like | CMB TT+TE+EE | 0.476852 | 0.0750947 | 0.501387 | 0.00799934 | 0.478239 | 4.61783 | 14.0196 | 0.0429 |
-| Euclid | GCph+WL + GCsp | 0.00353101 | 0.00175178 | 0.0142807 | 0.0096058 | 0.00399207 | 0.0391053 | 0.140347 | 182 |
+| Euclid | GCph+WL + GCsp | 0.00336613 | 0.00111382 | 0.00783857 | 0.00579484 | 0.00329397 | 0.0350528 | 0.120817 | 638 |
 
 How to read these tables:
 
@@ -465,6 +477,13 @@ How to read these tables:
   optical spectroscopic surveys on shape parameters.
 * **The IM x DESI-ELG row is a cross-spectrum-only Fisher** (auto-spectra are not
   included). It is not directly comparable to the IM-only row.
+* **IM volumes use the IM footprint.** The IM-only row uses `fsky_IM = 0.48` for both the
+  volume and the noise; the cross uses the smaller of the two sky fractions. Before this
+  fix the volume silently used the spectroscopic sky fraction. The IM `k` range still
+  follows `kmin_GCsp`/`kmax_GCsp`, as it did historically.
+* **Combinations retain the parameter correlations.** The combined rows add the full
+  nuisance-marginalised Fisher matrices; the marginalised errors follow from the inverse
+  of the sum. A diagonal-only combination would have understated the gain.
 * **Planck-like** is the shipped single-channel approximation with `lmax = 1500` and no
   lensing, run with CAMB (the only backend that produces CMB spectra). It is not the real
   Planck likelihood and is included for completeness. Comparing against the published
@@ -494,11 +513,11 @@ numbers are MG constraints and are **not** targets here.
 - [x] `notebooks/09-Survey-validation.ipynb` (executed)
 - [x] `docs/source/survey_validation.md` + `user_guide.md` link
 - [x] Figures committed under `docs/source/_static/survey_validation/`
-- [x] Tests under `tests/` for configs, observables and script helpers
+- [x] Tests under `tests/` for configs, observables, script helpers and covariances
       (`tests/survey_specs_test.py`, `tests/survey_observables_validation_test.py`,
-      `tests/survey_forecast_script_test.py`)
+      `tests/survey_forecast_script_test.py`, `tests/survey_covariance_test.py`)
 - [x] CHANGELOG entry (updated per step)
-- [ ] `paper/` figure + paragraph
+- [x] `paper/` figure + paragraph
 - [ ] PR
 
 ---
@@ -518,3 +537,4 @@ is next.
 | 2026-11-13 | Phase 4 (docs half): added `scripts/validation/plot_survey_validation.py`, `docs/source/survey_validation.md`, `notebooks/09-Survey-validation.ipynb` and the four committed figures under `docs/source/_static/survey_validation/` | Figures regenerate from the JSON reports; the notebook executes top-to-bottom (three quick cases + observable validation, ~2 min). Strict docs build still to run. Next: paper figure/paragraph, then Phase 5 checks |
 | 2026-11-13 | Phase 4 (paper half) + Phase 5: paper figure/paragraph, strict docs build, covariance tests, derivative-step and resolution scan | `paper/figures/fig4_survey_comparison.png` and the JOSS paragraph added; `sphinx -W` passes. New `tests/survey_covariance_test.py` covers the DESI-ELG and SKAO x DESI covariance paths. The step scan showed the GCsp derivatives were under-converged at 1%; Tab. 7.2 was regenerated at 0.2% and the docs updated. Next: final review and PR |
 | 2026-11-13 | Final review: roadmap numbers, docs page, figures and notebook regenerated at the 0.2% step; 22 survey tests, ruff/black/isort and `sphinx -W` green | Branch ready to push as one PR |
+| 2026-11-13 | Addressed the external review: full-matrix Fisher combination, probe-consistent IM volume, IM k-range documented as inherited, ellipse centring fixed, explicit `mnu = 0.06` eV, per-case settings and package versions recorded, claims narrowed (photo spectra deferred; Fig. 1 attribution softened) | LCDM and w0waCDM reports regenerated, tables/figures refreshed, correlated-combination and sky-fraction tests added |

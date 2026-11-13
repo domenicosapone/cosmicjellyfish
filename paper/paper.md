@@ -377,11 +377,15 @@ matrices take less or more time depending on that.
 **Cross-survey validation.** To check that the pipeline is not tied to Euclid, we
 transcribed the DESI, Rubin/LSST and SKAO specifications of @Casas2023SKAO into the
 current schema and compared the resulting observables---bin densities, biases, survey
-volumes, the galaxy, intensity-mapping and photometric spectra, the beam and the thermal
-noise---against an independent re-implementation of the historical recipes. Every
-ingredient agrees at machine precision. The only visible difference is the amplitude of
-the SKAO Fig. 1 spectra, which traces the modified-gravity fiducial used in the original
-runs and not the forecast code. Running all configurations on a common GR fiducial then
+volumes, the galaxy and intensity-mapping spectra, the beam, the thermal noise, and the
+photometric redshift distributions and bin counts---against an independent
+re-implementation of the historical recipes. All algebra-level ingredients agree at
+machine precision. The photometric angular spectra are not re-compared against the
+historical project here; they are covered by the existing observable tests. The residual
+shape difference in the SKAO Fig. 1 spectra is below 1.5 per cent over the calibrated
+range, with an amplitude offset consistent with (but not uniquely attributable to) the
+modified-gravity fiducial used in the original runs. Running all configurations on a
+common GR fiducial then
 produces a consistent set of constraints (\autoref{fig:surveys}). The ranking between
 surveys in that comparison reflects the adopted specifications---sky area, redshift
 binning and scale cuts---rather than the telescopes themselves, which is exactly the

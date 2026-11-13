@@ -58,15 +58,17 @@ def fisher_path(output_dir: Path, case: str) -> Path:
     return sorted((output_dir / "fishers").glob(pattern))[0]
 
 
-def draw_ellipse(axis, covariance: np.ndarray, colour: str, label: str) -> None:
-    """Draw the 1-sigma ellipse of a two-parameter covariance."""
+def draw_ellipse(
+    axis, covariance: np.ndarray, centre: tuple[float, float], colour: str, label: str
+) -> None:
+    """Draw the 1-sigma ellipse of a two-parameter covariance at the fiducial point."""
     eigenvalues, eigenvectors = np.linalg.eigh(covariance)
     order = np.argsort(eigenvalues)[::-1]
     eigenvalues = eigenvalues[order]
     eigenvectors = eigenvectors[:, order]
     angle = np.degrees(np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0]))
     ellipse = Ellipse(
-        (0.0, 0.0),
+        centre,
         width=2.0 * np.sqrt(eigenvalues[0]),
         height=2.0 * np.sqrt(eigenvalues[1]),
         angle=angle,
@@ -109,7 +111,13 @@ def main() -> None:
         matrix = marginalise(
             fisher_matrix(file_name=str(fisher_path(output_dir, case))), ["w0", "wa"]
         )
-        draw_ellipse(right, np.linalg.inv(matrix.get_fisher_matrix()), colour, label)
+        draw_ellipse(
+            right,
+            np.linalg.inv(matrix.get_fisher_matrix()),
+            centre=(-1.0, 0.0),
+            colour=colour,
+            label=label,
+        )
     right.axhline(0.0, color="grey", linewidth=0.8)
     right.axvline(-1.0, color="grey", linewidth=0.8)
     right.set_xlabel(r"$w_0$")

@@ -44,6 +44,9 @@ COMMON_FIDUCIAL = {
     "h": 0.67,
     "ns": 0.96,
     "sigma8": 0.822,
+    # Fixed, not varied. Spelled out because the symbolic backend falls back to
+    # 0.06 eV when the key is absent; do not describe these runs as massless.
+    "mnu": 0.06,
 }
 # Relative finite-difference steps. The spectroscopic derivatives need a smaller step
 # than the photometric ones: at 1% the GCsp Fisher matrix is not converged (sigma8 moves
@@ -190,6 +193,57 @@ def _free_parameters(model: str) -> dict[str, float]:
     raise ValueError(f"Unsupported model {model!r}")
 
 
+def _effective_settings(fisher: FisherMatrix, case: ForecastCase, model: str) -> dict:
+    """Record the settings that actually entered the run, not just the requested ones."""
+    settings = fisher.settings
+    specs = fisher.specs
+    names = list(_free_parameters(model))
+
+    def finite_or_none(value):
+        try:
+            value = float(value)
+        except (TypeError, ValueError):
+            return None
+        return value if np.isfinite(value) else None
+
+    return {
+        "code": settings.get("code"),
+        "cosmo_model": model,
+        "nonlinear": bool(settings.get("nonlinear", False)),
+        "derivatives": settings.get("derivatives"),
+        "derivative_step": float(_free_parameters(model)[names[0]]),
+        "spectro_Pk_k_samples": settings.get("spectro_Pk_k_samples"),
+        "spectro_Pk_mu_samples": settings.get("spectro_Pk_mu_samples"),
+        "kmin_fish": finite_or_none(getattr(fisher, "kmin_fish", None)),
+        "kmax_fish": finite_or_none(getattr(fisher, "kmax_fish", None)),
+        "fsky_spectro": specs.get("fsky_spectro"),
+        "fsky_IM": specs.get("fsky_IM"),
+        "spec_sigma_dz": specs.get("spec_sigma_dz"),
+        "mnu": fisher.fiducialcosmopars.get("mnu"),
+        "observables": list(case.observables),
+    }
+
+
+def _environment() -> dict:
+    """Versions of the interpreter and the packages that can change the numbers."""
+    from importlib import metadata
+    from platform import python_version
+
+    def version(package: str):
+        try:
+            return metadata.version(package)
+        except metadata.PackageNotFoundError:
+            return None
+
+    return {
+        "python": python_version(),
+        "cosmicjellyfish": version("cosmicjellyfish"),
+        "symbolic-pofk": version("symbolic-pofk"),
+        "camb": version("camb"),
+        "classy": version("classy"),
+    }
+
+
 def run_case(case: ForecastCase, model: str, output_dir: Path) -> dict:
     """Run one forecast and return the marginalised errors."""
     options = dict(BASE_OPTIONS)
@@ -220,7 +274,8 @@ def run_case(case: ForecastCase, model: str, output_dir: Path) -> dict:
 
     names = list(freepars)
     reduced = marginalise(matrix, names)
-    covariance = np.linalg.inv(reduced.fisher_matrix)
+    fisher_block = np.asarray(reduced.fisher_matrix, dtype=float)
+    covariance = np.linalg.inv(fisher_block)
     sigma = {name: float(np.sqrt(covariance[i, i])) for i, name in enumerate(names)}
 
     result = {
@@ -230,6 +285,10 @@ def run_case(case: ForecastCase, model: str, output_dir: Path) -> dict:
         "note": case.note,
         "elapsed_s": elapsed,
         "sigma": sigma,
+        # Keep the full nuisance-marginalised Fisher block so combinations sum matrices
+        # rather than discarding the parameter correlations.
+        "fisher_matrix": fisher_block.tolist(),
+        "settings": _effective_settings(fisher, case, model),
     }
     if model == "w0waCDM":
         block = covariance[-2:, -2:]
@@ -238,13 +297,22 @@ def run_case(case: ForecastCase, model: str, output_dir: Path) -> dict:
 
 
 def combine(results: dict[str, dict], members: tuple[str, ...], model: str) -> dict:
-    """Add independent cosmological blocks after nuisance marginalisation."""
+    """Add independent nuisance-marginalised Fisher blocks.
+
+    Each probe is first marginalised over its own nuisances, which leaves a
+    cosmological block that still carries the correlations between parameters. Those
+    blocks are added as matrices; the marginalised errors are then read from the
+    inverse of the sum. Rebuilding each block from its diagonal errors would assume the
+    cosmological parameters are uncorrelated and is not a Fisher combination.
+    """
     names = list(_free_parameters(model))
     total = np.zeros((len(names), len(names)))
     for member in members:
-        sigma = results[member]["sigma"]
-        covariance = np.diag([sigma[name] ** 2 for name in names])
-        total += np.linalg.inv(covariance)
+        block = results[member].get("fisher_matrix")
+        if block is None:
+            sigma = results[member]["sigma"]
+            block = np.diag([1.0 / sigma[name] ** 2 for name in names])
+        total = total + np.asarray(block, dtype=float)
     covariance = np.linalg.inv(total)
     sigma = {name: float(np.sqrt(covariance[i, i])) for i, name in enumerate(names)}
     result = {
@@ -325,6 +393,7 @@ def main(argv: list[str] | None = None) -> int:
         "fiducial": fiducial,
         "freepars": _free_parameters(args.model),
         "options": BASE_OPTIONS,
+        "environment": _environment(),
         "results": ordered,
         "errors": [
             {"name": value["name"], "label": value["label"], "error": value["error"]}

@@ -61,6 +61,17 @@ def test_desi_elg_covariance_is_positive_inside_the_bins():
     assert np.all(cov.veff(2.0, k, mu) == 0.0)
 
 
+def test_skao_im_volume_uses_the_im_sky_fraction():
+    cov, _ = _covariance("SKAO", ["IM"])
+    fsky_im = float(cov.config.specs["fsky_IM"])
+    assert cov.fsky_volume == pytest.approx(fsky_im)
+    for index in range(len(cov.inter_z_bin_mids)):
+        assert cov.volume_survey(index) == pytest.approx(fsky_im * cov.d_volume(index))
+    # The noise term and the volume must use the same footprint, otherwise the forecast
+    # is neither IM-only nor spectroscopic.
+    assert cov.fsky_volume == pytest.approx(float(cov.pk_obs.fsky_IM))
+
+
 def test_skao_im_desi_cross_covariance_matches_the_overlap():
     cov, _ = _covariance(
         "SKAO",
@@ -71,6 +82,11 @@ def test_skao_im_desi_cross_covariance_matches_the_overlap():
         },
     )
     assert len(cov.inter_z_bin_mids) == 11
+    # A cross-spectrum only exists where both surveys observe: the overlap is the
+    # smaller of the two sky fractions.
+    assert cov.fsky_volume == pytest.approx(
+        min(cov.fsky_spectro, float(cov.config.specs["fsky_IM"]))
+    )
     k, mu = np.meshgrid(np.array([0.02]), np.array([0.5]))
     for index, z in enumerate(cov.inter_z_bin_mids):
         assert cov.volume_survey(index) > 0.0

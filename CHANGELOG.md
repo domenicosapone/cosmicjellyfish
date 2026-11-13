@@ -98,6 +98,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Survey validation review follow-up. `SpectroCov` now uses the probe-appropriate sky
+  fraction for the survey volume (`fsky_IM` for intensity mapping, the overlap for a
+  cross-spectrum) instead of always using `fsky_spectro`; survey forecast combinations add
+  the full nuisance-marginalised Fisher blocks rather than rebuilding them from diagonal
+  errors, so parameter correlations are retained; the w0-wa ellipses are drawn at the
+  actual fiducial `(w0, wa) = (-1, 0)`; the reports record the resolved settings per case
+  and the package versions; the fiducial is explicit about the fixed `mnu = 0.06` eV; and
+  the observable-validation claims are narrowed (photometric angular spectra are not
+  re-compared, and the Fig. 1 amplitude offset is no longer attributed solely to the
+  modified-gravity fiducial).
 - Review fixes for the PyPI preparation: the publish jobs check out with
   `persist-credentials: false`; the legacy symbolic backend only shows the `symbolic_pofk`
   install hint when `symbolic_pofk` itself is missing (a missing `colossus` is reported as

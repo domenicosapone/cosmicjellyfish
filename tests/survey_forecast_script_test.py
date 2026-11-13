@@ -52,6 +52,7 @@ def test_combination_matches_inverse_variance_addition():
             "note": "",
             "elapsed_s": 1.0,
             "sigma": sigma,
+            "fisher_matrix": np.diag([1.0 / sigma[n] ** 2 for n in names]).tolist(),
         }
         for name, sigma in sigmas.items()
     }
@@ -60,6 +61,53 @@ def test_combination_matches_inverse_variance_addition():
     for name in names:
         assert combined["sigma"][name] == pytest.approx(expected, rel=1e-12)
     assert combined["elapsed_s"] == pytest.approx(2.0)
+
+
+def test_combination_keeps_parameter_correlations():
+    names = list(module._free_parameters("LCDM"))
+    first = np.array(
+        [
+            [4.0, 1.0, 0.5, 0.0, 0.0],
+            [1.0, 3.0, 0.4, 0.0, 0.0],
+            [0.5, 0.4, 2.0, 0.1, 0.0],
+            [0.0, 0.0, 0.1, 2.5, 0.3],
+            [0.0, 0.0, 0.0, 0.3, 1.5],
+        ]
+    )
+    second = np.array(
+        [
+            [2.0, 0.6, 0.0, 0.0, 0.0],
+            [0.6, 2.2, 0.3, 0.0, 0.0],
+            [0.0, 0.3, 1.8, 0.2, 0.0],
+            [0.0, 0.0, 0.2, 3.0, 0.5],
+            [0.0, 0.0, 0.0, 0.5, 2.4],
+        ]
+    )
+    results = {
+        "first": {
+            "label": "first",
+            "observables": ["GCsp"],
+            "note": "",
+            "elapsed_s": 1.0,
+            "sigma": {n: float(np.sqrt(np.linalg.inv(first)[i, i])) for i, n in enumerate(names)},
+            "fisher_matrix": first.tolist(),
+        },
+        "second": {
+            "label": "second",
+            "observables": ["GCsp"],
+            "note": "",
+            "elapsed_s": 1.0,
+            "sigma": {n: float(np.sqrt(np.linalg.inv(second)[i, i])) for i, n in enumerate(names)},
+            "fisher_matrix": second.tolist(),
+        },
+    }
+    combined = module.combine(results, ("first", "second"), "LCDM")
+    expected = np.sqrt(np.diag(np.linalg.inv(first + second)))
+    naive = np.sqrt(np.diag(np.linalg.inv(np.diag(np.diag(first) + np.diag(second)))))
+    for index, name in enumerate(names):
+        assert combined["sigma"][name] == pytest.approx(expected[index], rel=1e-12)
+    # Dropping the off-diagonal blocks would move at least one error noticeably.
+    assert np.max(np.abs(np.array(list(combined["sigma"].values())) / naive - 1.0)) > 1e-3
 
 
 def test_format_table_has_one_row_per_case():
