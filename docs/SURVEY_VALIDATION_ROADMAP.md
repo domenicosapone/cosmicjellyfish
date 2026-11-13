@@ -279,8 +279,21 @@ pass; the 0.2% step agrees with 0.05% at the 0.1% level and is used for Tab. 7.2
 
 Resolution check at the 1% step (96 k x 9 mu vs 128 k x 12 mu): `sigma(Omegam)` changes
 from 0.004833 to 0.004825 and `sigma(sigma8)` from 0.003894 to 0.003895, i.e. below 0.2%.
-The photometric probes are stable: Euclid `GCph+WL` gives `0.002414`/`0.002995` at 1% and
-`0.002415`/`0.002995` at 0.2%.
+
+The same 1% -> 0.2% comparison was run on every clustering probe. The bias affects all
+three-dimensional clustering analyses (GCsp and IM), not one survey:
+
+| Probe | sigma(sigma8) at 1% | at 0.2% | ratio |
+| --- | --- | --- | --- |
+| Euclid `GCsp` | 0.005023 | 0.006269 | 1.25 |
+| DESI ELG `GCsp` | 0.003895 | 0.005353 | 1.37 |
+| SKAO HI `GCsp` | 0.027125 | 0.037376 | 1.38 |
+| SKAO `IM` | 0.006163 | 0.007406 | 1.20 |
+
+In absolute terms the largest effect is on SKAO HI (0.0271 -> 0.0374) and DESI ELG
+(0.0039 -> 0.0054); relative to their own error bar all four are 20-38%. The photometric
+probes are stable: Euclid `GCph+WL` gives `0.002414`/`0.002995` at 1% and
+`0.002415`/`0.002995` at 0.2%, and Rubin and SKAO photometric behave the same way.
 
 **Exit criterion.** Green CI, strict docs build, and a reviewer can reproduce at least
 one number per survey from the docs page alone.
@@ -396,9 +409,10 @@ fiducial `Omegam=0.32, Omegab=0.05, h=0.67, ns=0.96, sigma8=0.822`.
 
 Common setup for every row: GR fiducial `Omegam=0.32, Omegab=0.05, h=0.67, ns=0.96,
 sigma8=0.822`, massless neutrinos, flat LCDM, `derivatives = 3PT`, relative steps `0.002`,
-same `k`/`mu` sampling. A step scan (Tab. in Phase 5) showed that the GCsp derivatives
-need `0.002`: at `0.01` the spectroscopic `sigma(sigma8)` is biased low by 20-35%, while
-`0.002` and `0.0005` agree to better than 0.1%. The photometric probes are stable at the
+same `k`/`mu` sampling. A step scan (Tab. in Phase 5) showed that the three-dimensional clustering derivatives
+(GCsp and IM) need `0.002`: at `0.01` their `sigma(sigma8)` is biased low by 20-38%
+(Euclid GCsp 25%, DESI ELG 37%, SKAO HI 38%, SKAO IM 20%), while `0.002` and `0.0005`
+agree to better than 0.1%. The photometric probes are stable at the
 0.03% level between `0.01` and `0.002`. Bias, shot-noise and (where present) `sigma_v`/`sigma_p` nuisances
 are marginalised before the errors are quoted. Produced by
 `uv run python scripts/validation/run_survey_forecasts.py` (add `--model w0waCDM` for the

@@ -101,10 +101,11 @@ the figure as "quantified", not "reproduced".
 All runs use the same GR fiducial (`Omegam = 0.32`, `Omegab = 0.05`, `h = 0.67`,
 `ns = 0.96`, `sigma8 = 0.822`), flat LCDM, massless neutrinos, the `3PT` derivative
 scheme with 0.2% relative steps and the same `k`/`mu` sampling. The step is smaller
-than the 1% used for the photometric runs because the spectroscopic Fisher matrix is
-not converged at 1%: `sigma(sigma8)` moves by about 25% between 1% and 0.2%, while
-0.2% and 0.05% agree to better than 0.1%. The photometric errors change by only 0.03%
-between 1% and 0.2%. Bias, shot-noise and (where
+than the 1% used for the photometric runs because every three-dimensional clustering
+analysis is under-converged at 1%: relative to their own error bar, `sigma(sigma8)` grows
+by 25% (Euclid GCsp), 37% (DESI ELG), 38% (SKAO HI) and 20% (SKAO IM) when going from 1%
+to 0.2%, while 0.2% and 0.05% agree to better than 0.1%. The photometric errors change by
+only 0.03% between 1% and 0.2%. Bias, shot-noise and (where
 present) `sigma_v`/`sigma_p` nuisances are marginalised before the errors are quoted.
 Everything runs on the `symbolic` backend except the Planck-like case, which uses CAMB.
 Combinations are the sum of the independent nuisance-marginalised blocks; the

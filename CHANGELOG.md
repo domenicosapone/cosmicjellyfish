@@ -81,8 +81,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Survey forecast comparison tables, figures and the SKAO cross-check now use a 0.2%
   relative finite-difference step. A step scan showed that the spectroscopic (GCsp)
   Fisher matrix is not converged at the 1% step used in the first pass: the
-  spectroscopic `sigma(sigma8)` moves by 20-35% between 1% and 0.2%, while 0.2% and
-  0.05% agree to better than 0.1%. The photometric probes are stable at 0.03%.
+  three-dimensional clustering `sigma(sigma8)` moves by 20-38% between 1% and 0.2%
+  (Euclid GCsp 25%, DESI ELG 37%, SKAO HI 38%, SKAO IM 20%), while 0.2% and 0.05%
+  agree to better than 0.1%. The photometric probes are stable at 0.03%.
 - Package version bumped to `2.0.0rc1` (first PyPI release candidate of the 2.0 series, which
   covers the `cosmicfishpie` to `cosmicjellyfish` rename, the JAX backend and the symbolic
   backend overhaul). The legacy `1.3.1` heading now uses the `## [vX.Y.Z]` format that
