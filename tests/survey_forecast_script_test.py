@@ -61,6 +61,36 @@ def test_combination_matches_inverse_variance_addition():
     for name in names:
         assert combined["sigma"][name] == pytest.approx(expected, rel=1e-12)
     assert combined["elapsed_s"] == pytest.approx(2.0)
+    assert np.shape(combined["fisher_matrix"]) == (len(names), len(names))
+
+
+def test_combination_requires_a_stored_block():
+    results = {
+        "first": {
+            "label": "first",
+            "observables": ["GCsp"],
+            "note": "",
+            "elapsed_s": 1.0,
+            "sigma": {name: 0.1 for name in module._free_parameters("LCDM")},
+        }
+    }
+    with pytest.raises(ValueError, match="no stored Fisher block"):
+        module.combine(results, ("first",), "LCDM")
+
+
+def test_combination_rejects_a_block_with_the_wrong_shape():
+    results = {
+        "first": {
+            "label": "first",
+            "observables": ["GCsp"],
+            "note": "",
+            "elapsed_s": 1.0,
+            "sigma": {name: 0.1 for name in module._free_parameters("LCDM")},
+            "fisher_matrix": np.eye(3).tolist(),
+        }
+    }
+    with pytest.raises(ValueError, match="Fisher block of shape"):
+        module.combine(results, ("first",), "LCDM")
 
 
 def test_combination_keeps_parameter_correlations():

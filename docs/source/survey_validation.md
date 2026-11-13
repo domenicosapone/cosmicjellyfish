@@ -119,12 +119,18 @@ only 0.03% between 1% and 0.2%. Bias, shot-noise and (where
 present) `sigma_v`/`sigma_p` nuisances are marginalised before the errors are quoted.
 Everything runs on the `symbolic` backend except the Planck-like case, which uses CAMB.
 Combinations sum the full nuisance-marginalised Fisher blocks of the two probes, so the
-parameter correlations between the probes' contributions are retained; the IM x DESI-ELG
-row is the cross-spectrum only.
+parameter correlations between the probes' contributions are retained; the harness refuses
+to combine a report that does not store those blocks rather than falling back to the
+diagonal errors. The IM x DESI-ELG row is the cross-spectrum only.
 
 For intensity mapping the survey volume uses the IM sky fraction (`fsky_IM = 0.48`),
-matching the footprint already used by the 21-cm noise term, and the cross-spectrum uses
-the overlap (the smaller of `fsky_spectro` and `fsky_IM`). The IM `k` range is inherited
+matching the footprint already used by the 21-cm noise term. For the cross-spectrum the
+sky fraction can be set explicitly with the optional `fsky_cross` key; when it is absent
+the code uses the smaller of `fsky_spectro` and `fsky_IM`, which assumes the smaller
+footprint is fully contained in the larger one. The migrated specifications do not set
+`fsky_cross`, so their cross-spectrum volume carries that nested-footprint assumption; the
+code records it in `SpectroCov.fsky_cross_assumed_nested` and rejects an explicit
+`fsky_cross` larger than the nested value. The IM `k` range is inherited
 from the galaxy-clustering settings (`kmin_GCsp`, `kmax_GCsp`), as in the historical
 project: the `kmin_IM`/`kmax_IM` entries of the specification are currently not consumed
 and are recorded as an open item in the roadmap.
@@ -181,11 +187,21 @@ Here `w0 = -1`, `wa = 0`, and the figure of merit is
 | Planck-like | CMB TT+TE+EE | 0.476852 | 0.0750947 | 0.501387 | 0.00799934 | 0.478239 | 4.61783 | 14.0196 | 0.0429 |
 | Euclid | GCph+WL+GCsp | 0.00336613 | 0.00111382 | 0.00783857 | 0.00579484 | 0.00329397 | 0.0350528 | 0.120817 | 638 |
 
-```{image} _static/survey_validation/w0wa_ellipses.png
-:alt: w0-wa Fisher ellipses for Euclid, Rubin, DESI, SKAO and Planck-like
-:width: 85%
+```{image} _static/survey_validation/w0wa_comparisons.png
+:alt: Paired w0-wa Fisher ellipses for photometric, spectroscopic, combined and intensity-mapping probes
+:width: 90%
 :align: center
 ```
+
+Each panel pairs probes of comparable constraining power instead of overlaying every
+survey: photometry alone (Euclid vs Rubin/LSST), spectroscopy alone (Euclid vs DESI
+BGS+ELG), the photo+spectro combinations, and the SKAO IM versus Euclid GCsp comparison
+motivated by the SKAO paper. The Planck-like run is kept in the table but left out of the
+ellipses: its single-channel approximation is an order of magnitude weaker and would set
+the axis scale for every other probe. The combined curves are sums of the stored
+nuisance-marginalised Fisher blocks, which keeps the parameter correlations; they still
+assume the probes are statistically independent and therefore do not include
+cross-covariances.
 
 ## Reading the numbers
 
@@ -228,5 +244,8 @@ The work is guarded by four fast test files that need no solver or network acces
   ordering, full-matrix Fisher combination (including a correlated case) and table
   formatting.
 - `tests/survey_covariance_test.py` builds the DESI ELG, SKAO IM and IM x DESI covariance
-  matrices and checks that the effective volumes are positive where the bins overlap and
-  use the probe-appropriate sky fraction.
+  matrices and checks that the effective volumes are positive where the bins overlap, that
+  the cross-spectrum uses `veff_Ig`, and that the sky fraction follows the probe (with an
+  optional explicit `fsky_cross`).
+- `tests/survey_plot_test.py` pins the marginalised `w0`-`wa` covariance used by the
+  comparison figure, so the ellipses cannot silently become conditional errors.

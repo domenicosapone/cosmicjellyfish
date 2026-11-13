@@ -321,7 +321,10 @@ one number per survey from the docs page alone.
 | 9 | `kmax_IM`/`kmin_IM` are not consumed anywhere | `fishermatrix/cosmicfish.py`, specs | 2 | **traced and documented** - the historical project also used `kmin_GCsp`/`kmax_GCsp` for IM, so the IM forecasts inherit the GCsp range by design; the unused YAML entries are flagged on the docs page |
 | 10 | Survey-table numbers in the docs had not been re-checked against the generated reports | docs | 1 | **fixed** - the LCDM/w0waCDM tables are generated from `results/survey_validation/*.json` |
 | 11 | Photometric angular spectra are not re-compared against the historical project | `scripts/validation` | 2 | **deferred** - the harness checks `dN/dz` and bin counts only; the angular paths are covered by existing photometric tests |
-| 12 | Fisher combinations rebuild each covariance from diagonal errors, dropping parameter correlations | `scripts/validation/run_survey_forecasts.py` | 6 | **fixed** - the script now stores and sums the full marginalised Fisher blocks; covered by a correlated regression test |
+| 12 | Fisher combinations rebuild each covariance from diagonal errors, dropping parameter correlations | `scripts/validation/run_survey_forecasts.py` | 6 | **fixed** - the script stores and sums the full marginalised blocks, refuses to combine a report without them, and keeps the summed block for further use; covered by correlated and missing-block regression tests |
+| 13 | A cross-spectrum volume used `min(fsky_spectro, fsky_IM)`, which is the true overlap only when the smaller footprint is nested in the larger one | `spectro_cov.py`, docs | 5-6 | **documented** - the default is now explicitly a nested-footprint approximation, flagged as `fsky_cross_assumed_nested`; an optional `fsky_cross` key overrides it and values above the nested bound are rejected; covered by two covariance tests |
+| 14 | The `w0`-`wa` figure overlaid six probes including the much weaker Planck-like run, and the script silently skipped missing Fisher files | `plot_survey_validation.py` | 4 | **fixed** - the figure is now four paired panels (photo, spectro, combined, IM vs GCsp) built from the stored blocks; a missing case raises |
+| 15 | The cross-covariance test exercised `veff()` instead of the `veff_Ig()` used by the cross-spectrum forecast | `tests/survey_covariance_test.py` | 5 | **fixed** - the test now checks `veff_Ig` |
 
 ---
 
@@ -426,8 +429,10 @@ are marginalised before the errors are quoted. Produced by
 `uv run python scripts/validation/run_survey_forecasts.py` (add `--model w0waCDM` for the
 dark-energy table). The report records the resolved settings per case, the fiducial and
 the package versions. Combinations sum the full nuisance-marginalised Fisher blocks of the
-two probes (correlations retained), not their diagonal errors. For IM the survey volume
-uses `fsky_IM` and the cross uses the smaller of the two sky fractions; the IM `k` range is
+two probes (correlations retained), not their diagonal errors, and a report missing those
+blocks is rejected. For IM the survey volume uses `fsky_IM`; the cross uses an explicit
+`fsky_cross` when given and otherwise the smaller of the two sky fractions, which assumes
+the smaller footprint is nested in the larger one. The IM `k` range is
 inherited from the GCsp settings as in the historical project (see issue 9).
 
 Marginalised 1-sigma errors, LCDM (`sigma8`, not `10^9As`, is the free amplitude here so
@@ -515,7 +520,8 @@ numbers are MG constraints and are **not** targets here.
 - [x] Figures committed under `docs/source/_static/survey_validation/`
 - [x] Tests under `tests/` for configs, observables, script helpers and covariances
       (`tests/survey_specs_test.py`, `tests/survey_observables_validation_test.py`,
-      `tests/survey_forecast_script_test.py`, `tests/survey_covariance_test.py`)
+      `tests/survey_forecast_script_test.py`, `tests/survey_covariance_test.py`,
+      `tests/survey_plot_test.py`)
 - [x] CHANGELOG entry (updated per step)
 - [x] `paper/` figure + paragraph
 - [ ] PR
@@ -538,3 +544,4 @@ is next.
 | 2026-11-13 | Phase 4 (paper half) + Phase 5: paper figure/paragraph, strict docs build, covariance tests, derivative-step and resolution scan | `paper/figures/fig4_survey_comparison.png` and the JOSS paragraph added; `sphinx -W` passes. New `tests/survey_covariance_test.py` covers the DESI-ELG and SKAO x DESI covariance paths. The step scan showed the GCsp derivatives were under-converged at 1%; Tab. 7.2 was regenerated at 0.2% and the docs updated. Next: final review and PR |
 | 2026-11-13 | Final review: roadmap numbers, docs page, figures and notebook regenerated at the 0.2% step; 22 survey tests, ruff/black/isort and `sphinx -W` green | Branch ready to push as one PR |
 | 2026-11-13 | Addressed the external review: full-matrix Fisher combination, probe-consistent IM volume, IM k-range documented as inherited, ellipse centring fixed, explicit `mnu = 0.06` eV, per-case settings and package versions recorded, claims narrowed (photo spectra deferred; Fig. 1 attribution softened) | LCDM and w0waCDM reports regenerated, tables/figures refreshed, correlated-combination and sky-fraction tests added |
+| 2026-11-13 | Second review pass: combination now requires the stored blocks and keeps the summed one; cross-spectrum footprint marked as a nested-footprint default with an optional `fsky_cross`; cross covariance tested through `veff_Ig`; ellipse figure regrouped into four paired panels without the Planck-like run; remaining MG attribution and axis-title wording fixed | `w0wa_comparisons.png` replaces the six-curve plot; new tests cover missing/misshaped blocks and an explicit cross footprint |

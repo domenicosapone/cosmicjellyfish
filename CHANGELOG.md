@@ -31,9 +31,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   both LCDM and w0waCDM, reports marginalised errors and dark-energy figures of merit, and
   writes Markdown/JSON summaries. Results are recorded in `docs/SURVEY_VALIDATION_ROADMAP.md`.
 - `scripts/validation/plot_survey_validation.py` and the resulting figures (survey inputs,
-  marginalised-error panels, `w0`-`wa` Fisher ellipses and the SKAO Fig. 1 diagnostic),
-  plus the documentation page `docs/source/survey_validation.md` and the executed tutorial
-  `notebooks/09-Survey-validation.ipynb`.
+  marginalised-error panels, paired `w0`-`wa` Fisher ellipses and the SKAO Fig. 1
+  diagnostic), plus the documentation page `docs/source/survey_validation.md` and the
+  executed tutorial `notebooks/09-Survey-validation.ipynb`.
+
+### Changed
+
+- The survey forecast harness uses a relative finite-difference step of `0.002` for the
+  galaxy-clustering and intensity-mapping probes. At the previous `0.01` their `sigma8`
+  errors were under-converged by 20-38%; the photometric probes are unchanged.
+
+### Fixed
+
+- Survey validation review follow-ups: combinations sum the full nuisance-marginalised
+  Fisher blocks (and the harness now refuses to combine a report that lacks them, keeping
+  the summed block for reuse), the IM volume uses `fsky_IM` and the cross-spectrum marks its
+  nested-footprint default (optional `fsky_cross` override), the paper ellipses are centred
+  on `(w0, wa) = (-1, 0)`, the fixed `mnu = 0.06` eV is explicit, and the validation claims
+  were narrowed to what is actually checked.
+- The cross-spectrum covariance test now exercises `veff_Ig`, and the `w0`-`wa` figure is
+  regrouped into four paired panels without the much weaker Planck-like run, with missing
+  inputs raising instead of being silently skipped.
 
 ## [v2.0.0](https://github.com/santiagocasas/cosmicjellyfish/releases/tag/v2.0.0) - 2026-11-12
 

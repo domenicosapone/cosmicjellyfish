@@ -304,15 +304,27 @@ def combine(results: dict[str, dict], members: tuple[str, ...], model: str) -> d
     blocks are added as matrices; the marginalised errors are then read from the
     inverse of the sum. Rebuilding each block from its diagonal errors would assume the
     cosmological parameters are uncorrelated and is not a Fisher combination.
+
+    Every member must provide its full block in the parameter order of ``model``. A
+    missing block raises instead of silently falling back to a diagonal matrix, because
+    that fallback would reintroduce exactly the approximation this function avoids.
     """
     names = list(_free_parameters(model))
     total = np.zeros((len(names), len(names)))
     for member in members:
         block = results[member].get("fisher_matrix")
         if block is None:
-            sigma = results[member]["sigma"]
-            block = np.diag([1.0 / sigma[name] ** 2 for name in names])
-        total = total + np.asarray(block, dtype=float)
+            raise ValueError(
+                f"{member!r} has no stored Fisher block; rerun the forecasts with the "
+                "current script before combining them"
+            )
+        block = np.asarray(block, dtype=float)
+        if block.shape != (len(names), len(names)):
+            raise ValueError(
+                f"{member!r} has a Fisher block of shape {block.shape}, expected "
+                f"{(len(names), len(names))} for {model}"
+            )
+        total = total + block
     covariance = np.linalg.inv(total)
     sigma = {name: float(np.sqrt(covariance[i, i])) for i, name in enumerate(names)}
     result = {
@@ -324,6 +336,9 @@ def combine(results: dict[str, dict], members: tuple[str, ...], model: str) -> d
         "note": "sum of independent, nuisance-marginalised blocks",
         "elapsed_s": float(sum(results[member]["elapsed_s"] for member in members)),
         "sigma": sigma,
+        # Store the summed block so a combination can itself enter a further
+        # combination or a Fisher-space figure without being rebuilt from diagonals.
+        "fisher_matrix": total.tolist(),
     }
     if model == "w0waCDM":
         block = covariance[-2:, -2:]
