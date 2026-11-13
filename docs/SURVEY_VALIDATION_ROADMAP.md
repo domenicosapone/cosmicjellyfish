@@ -226,14 +226,19 @@ published-covariance comparison is tracked as a follow-up.
 
 Tasks
 
-- [ ] CLI scripts under `scripts/validation/` with `--quick` / default (full) modes,
+- [x] CLI scripts under `scripts/validation/` with quick / default (full) modes,
       writing the effective configuration, backend version and an output directory.
-- [ ] Plots: survey coverage and inputs (n(z), bias, noise), representative spectra,
+      `run_survey_forecasts.py --case ...` selects a subset (the quick mode); the default
+      runs every case in the chosen model.
+- [x] Plots: survey coverage and inputs (n(z), bias, noise), representative spectra,
       Fisher ellipses via the existing `fishconsumer` machinery, marginal-error
       comparison panels, and the Fig. 1 historical-vs-current diagnostic.
-- [ ] One tutorial notebook that runs the quick configuration end-to-end.
-- [ ] Docs page under `docs/source/` with the migrated specs, commands, results,
-      limitations and comparisons; link it from `user_guide.md`.
+      Produced by `scripts/validation/plot_survey_validation.py`.
+- [x] One tutorial notebook that runs the quick configuration end-to-end:
+      `notebooks/09-Survey-validation.ipynb`.
+- [x] Docs page under `docs/source/` with the migrated specs, commands, results,
+      limitations and comparisons; link it from `user_guide.md`
+      (`docs/source/survey_validation.md`).
 - [ ] JOSS paper: one compact figure and one paragraph, added **only** after Phase 3
       passes; revise the current "can load user specifications for DESI and LSST"
       wording to say what is actually shipped.
@@ -448,10 +453,10 @@ numbers are MG constraints and are **not** targets here.
 
 - [x] `docs/SURVEY_VALIDATION_ROADMAP.md` (this file), kept up to date
 - [x] New survey YAMLs under `cosmicjellyfish/configs/other_survey_specifications/`
-- [ ] `scripts/validation/run_survey_validation.py` and friends (quick/full)
-- [ ] `notebooks/NN-survey-validation.ipynb` (executed)
-- [ ] `docs/source/survey_validation.md` + `user_guide.md` link
-- [ ] Figures committed under `docs/source/_static/survey_validation/`
+- [x] `scripts/validation/` runners (observable harness, forecast comparison, plotting)
+- [x] `notebooks/09-Survey-validation.ipynb` (executed)
+- [x] `docs/source/survey_validation.md` + `user_guide.md` link
+- [x] Figures committed under `docs/source/_static/survey_validation/`
 - [x] Tests under `tests/` for configs, observables and script helpers
       (`tests/survey_specs_test.py`, `tests/survey_observables_validation_test.py`,
       `tests/survey_forecast_script_test.py`)
@@ -473,3 +478,4 @@ is next.
 | 2026-11-13 | Phase 1: migrated DESI BGS/ELG, Rubin, SKAO photo/spectro and IM x DESI-ELG specs; fixed the missing `Ps_5`; added `tests/survey_specs_test.py` | Six YAMLs parse, are per-bin consistent, load through `FisherMatrix`, and a DESI BGS `GCsp` forecast runs end-to-end. Next: Phase 2 observable validation |
 | 2026-11-13 | Phase 2: added `scripts/validation/survey_observable_reference.py`, `scripts/validation/validate_survey_observables.py` and `tests/survey_observables_validation_test.py` | 33 machinery checks agree at machine precision (density, volume, bias, `P_gg`, IM thermodynamics, beam, noise, `P_II`, `P_Ig`, photo `dNdz` and bin counts). Fig. 1 diagnostic: shape agrees to <= 1.5% over `0.005 <= k <= 0.05` 1/Mpc with a 0.5%-6.8% amplitude offset from the MG fiducial. Next: Phase 3 forecast comparisons |
 | 2026-11-13 | Phase 3: added `scripts/validation/run_survey_forecasts.py`; ran all 10 probe configurations at a common GR fiducial in LCDM and w0waCDM | Tab. 7.2 filled. Full LCDM set takes ~2 min, w0waCDM ~3 min (Planck/CAMB dominates). Rubin 3x2pt is stronger than the shipped Euclid photometric configuration because of its wider WL scale cuts; SKAO IM x DESI-ELG is cross-only. Next: Phase 4 scripts/plots/notebook/docs |
+| 2026-11-13 | Phase 4 (docs half): added `scripts/validation/plot_survey_validation.py`, `docs/source/survey_validation.md`, `notebooks/09-Survey-validation.ipynb` and the four committed figures under `docs/source/_static/survey_validation/` | Figures regenerate from the JSON reports; the notebook executes top-to-bottom (three quick cases + observable validation, ~2 min). Strict docs build still to run. Next: paper figure/paragraph, then Phase 5 checks |

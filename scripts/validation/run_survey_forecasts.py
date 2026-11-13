@@ -204,7 +204,7 @@ def run_case(case: ForecastCase, model: str, output_dir: Path) -> dict:
     options = dict(BASE_OPTIONS)
     options["cosmo_model"] = model
     options["results_dir"] = str(output_dir / "fishers")
-    options["outroot"] = f"survey_forecast_{case.name.replace('-', '_')}"
+    options["outroot"] = f"survey_forecast_{model.lower()}_{case.name.replace('-', '_')}"
     options.update(case.options)
     if case.survey == "Planck":
         options["camb_config_yaml"] = str(_camb_cmb_yaml(output_dir))

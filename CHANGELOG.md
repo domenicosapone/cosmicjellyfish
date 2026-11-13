@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   IM x DESI-ELG cross-spectrum) and a Planck-like CMB forecast on a common GR fiducial in
   both LCDM and w0waCDM, reports marginalised errors and dark-energy figures of merit, and
   writes Markdown/JSON summaries. Results are recorded in `docs/SURVEY_VALIDATION_ROADMAP.md`.
+- `scripts/validation/plot_survey_validation.py` and the resulting figures (survey inputs,
+  marginalised-error panels, `w0`-`wa` Fisher ellipses and the SKAO Fig. 1 diagnostic),
+  plus the documentation page `docs/source/survey_validation.md` and the executed tutorial
+  `notebooks/09-Survey-validation.ipynb`.
 
 ## [v2.0.0](https://github.com/santiagocasas/cosmicjellyfish/releases/tag/v2.0.0) - 2026-11-12
 
