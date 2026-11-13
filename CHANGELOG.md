@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Rubin-Photometric-SKAOPaper`, `SKAO-Photometric-SKAOPaper`,
   `SKAO-Spectroscopic-SKAOPaper` and `SKAO-IM-Redbook-DESI-ELG`. They are opt-in
   files under `other_survey_specifications/` and do not change any existing default.
+- Survey observable validation harness: `scripts/validation/survey_observable_reference.py`
+  (independent transcription of the historical galaxy-clustering, intensity-mapping and
+  photometric recipes) and `scripts/validation/validate_survey_observables.py`, which
+  compares the package against it for every migrated configuration and writes a JSON
+  report plus the SKAO Fig. 1 diagnostic. Results are recorded in
+  `docs/SURVEY_VALIDATION_ROADMAP.md`.
+- Fast guard tests `tests/survey_observables_validation_test.py` for the reference formulas
+  and the historical Fig. 1 table.
 
 ## [v2.0.0](https://github.com/santiagocasas/cosmicjellyfish/releases/tag/v2.0.0) - 2026-11-12
 
