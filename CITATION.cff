@@ -14,8 +14,9 @@ authors:
     given-names: Sefa
     affiliation: Universidad de Cantabria
     orcid: https://orcid.org/0009-0004-0852-8624
-  - family-names: V. M.
-    given-names: Sabarish
+  - family-names: Sabarish
+    given-names: V. M.
+    orcid: https://orcid.org/0000-0001-5677-0838
 keywords:
   - cosmology
   - fishermatrix
