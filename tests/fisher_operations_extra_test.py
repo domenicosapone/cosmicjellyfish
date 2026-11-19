@@ -109,3 +109,33 @@ def test_information_gain_prior_is_optional(simple_fisher):
     assert fo.information_gain(F1, F2, prior, stat=False) == pytest.approx(
         fo.information_gain(F1, F2, stat=False), rel=1e-6
     )
+
+
+def test_information_gain_prior_may_add_a_parameter(simple_fisher):
+    """A prior can supply a parameter that is absent from the second Fisher matrix.
+
+    The prior-added matrices share it, so the statistical term must zero-pad it rather
+    than ask ``reshuffle`` to extract it from ``fisher_2``.
+    """
+    F1 = simple_fisher
+    names = F1.get_param_names()
+    F2 = fm.fisher_matrix(
+        fisher_matrix=F1.get_fisher_matrix()[:2, :2],
+        param_names=names[:2],
+        param_names_latex=names[:2],
+        fiducial=F1.get_param_fiducial()[:2],
+        name="F2_subset",
+    )
+    prior = fm.fisher_matrix(
+        fisher_matrix=0.1 * np.eye(3),
+        param_names=names,
+        param_names_latex=F1.get_param_names_latex(),
+        fiducial=F1.get_param_fiducial(),
+        name="prior",
+    )
+    # ``c`` reaches the common set only through the prior.
+    ig_no_stat = fo.information_gain(F1, F2, prior, stat=False)
+    ig_with_stat = fo.information_gain(F1, F2, prior, stat=True)
+    assert np.isfinite(ig_no_stat)
+    assert np.isfinite(ig_with_stat)
+    assert ig_with_stat >= ig_no_stat

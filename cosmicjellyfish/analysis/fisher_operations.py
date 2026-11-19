@@ -305,10 +305,22 @@ def information_gain(fisher_1, fisher_2, fisher_prior=None, units=math.log(2.0),
     # reshuffle the second matrix:
     F1p = reshuffle(F1p, param_names)
     F2p = reshuffle(F2p, param_names)
-    # the second Fisher matrix without the prior, on the common parameters. (It used to be
-    # built as ``fisher_2 + 0``, but an all-zero Fisher matrix cannot be constructed because
-    # the constructor drops its empty rows and columns.)
-    fisher_temp = reshuffle(fisher_2, param_names)
+    # The statistical-average term needs fisher_2 without the prior, on the same
+    # parameters. A parameter can belong to both prior-added matrices only because the
+    # prior supplies it, so it may be absent from fisher_2 itself. Zero-pad those entries
+    # instead of reshuffling, which would raise. The alignment is only needed when the
+    # statistical average is requested.
+    if stat:
+        names_2 = fisher_2.get_param_names()
+        matrix_2 = fisher_2.get_fisher_matrix()
+        index_2 = {name: i for i, name in enumerate(names_2)}
+        aligned_2 = np.zeros((len(param_names), len(param_names)))
+        for i, first in enumerate(param_names):
+            if first not in index_2:
+                continue
+            for j, second in enumerate(param_names):
+                if second in index_2:
+                    aligned_2[i, j] = matrix_2[index_2[first], index_2[second]]
     # the first term:
     info_gain = info_gain - math.log(F1p.determinant() / F2p.determinant())
     info_gain = info_gain - F1p.get_fisher_matrix().shape[0]
@@ -319,14 +331,12 @@ def information_gain(fisher_1, fisher_2, fisher_prior=None, units=math.log(2.0),
         # we break down the third term into two pieces:
         temp = np.dot(
             np.dot(
-                np.dot(fisher_temp.get_fisher_matrix(), F2p.get_fisher_inverse()),
+                np.dot(aligned_2, F2p.get_fisher_inverse()),
                 F1p.get_fisher_matrix(),
             ),
             F2p.get_fisher_inverse(),
         )
-        temp = temp + np.dot(
-            np.dot(temp, fisher_temp.get_fisher_matrix()), F1p.get_fisher_inverse()
-        )
+        temp = temp + np.dot(np.dot(temp, aligned_2), F1p.get_fisher_inverse())
         info_gain = info_gain + np.trace(temp)
         # compute variance:
         temp = np.dot(temp, temp)
