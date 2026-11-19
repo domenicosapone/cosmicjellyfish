@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the `fisher_matrix` constructor reduces to zero parameters. The prior argument is now optional,
   and a prior may supply a parameter that is absent from the second Fisher matrix: the statistical
   term zero-pads it instead of asking `reshuffle` for a parameter that is not there.
+- `scripts/planck/run_planck_diagnostics_suite.sh` builds its Fisher filenames from the package
+  `VERSION` instead of the hard-coded `v1.3.0`; the combine step previously read names the
+  producers no longer write and stopped before creating the combined Fisher.
 
 ## [v2.0.0](https://github.com/santiagocasas/cosmicjellyfish/releases/tag/v2.0.0) - 2026-11-12
 
