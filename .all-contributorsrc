@@ -68,6 +68,16 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "fpace",
+      "name": "Francesco Pace",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11464556?v=4",
+      "profile": "https://github.com/fpace",
+      "contributions": [
+        "code",
+        "design"
+      ]
     }
   ],
   "contributorsPerLine": 7,
