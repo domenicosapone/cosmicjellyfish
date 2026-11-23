@@ -68,6 +68,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "noefrusciante",
+      "name": "noefrusciante",
+      "avatar_url": "https://avatars.githubusercontent.com/u/358231658?v=4",
+      "profile": "https://github.com/noefrusciante",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
